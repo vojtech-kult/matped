@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <Head title="Přihlášení lektora" />
+</head>
+<body>
+  <PublicNavbar active="admin-login" />
+
+  <main class="container page">
+    <section class="auth panel">
+      <h1 class="panel-title">Přihlášení lektora</h1>
+      <div class="panel-body">
+        <form id="login-form" class="form-stack" data-endpoint="/api/auth/admin/login">
+          <label class="field"><span>E-mail</span><input name="email" type="email" autocomplete="username" required></label>
+          <label class="field"><span>Heslo</span><input name="password" type="password" autocomplete="current-password" required></label>
+          <div><button type="submit" class="btn btn-primary">Přihlásit</button></div>
+          <div id="message" role="alert" class="flash"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+  <script src="/js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <Head title="Rezervace lekcí" />
+  <link rel="stylesheet" href="student.css">
+</head>
+<body>
+  <StudentNavbar active="bookings" />
+
+  <main class="container page">
+    <header class="page-head">
+      <h1>Rezervace lekcí</h1>
+      <p class="lead">Přihlášen jako <strong id="who"></strong>. Kliknutím na políčko lektora si rezervujete lekci (50 minut od uvedené hodiny), kliknutím na svou rezervaci ji zrušíte.</p>
+    </header>
+    <div id="message" role="alert" class="flash"></div>
+
+    <section class="panel">
+      <h2 class="panel-title">Legenda</h2>
+      <div class="panel-body"><p id="legend" class="legend"></p></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Volné termíny</h2>
+      <div class="panel-body">
+        <div class="grid-wrap"><div id="grid" class="grid"></div></div>
+        <p id="empty" hidden>Zatím nejsou vypsané žádné termíny.</p>
+      </div>
+    </section>
+  </main>
+
+  <AppFooter />
+
+  <script src="/js/top-scroll.js"></script>
+  <script src="student.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[czech]{babel}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+\pagestyle{plain}
+
+% Číslovaný příklad
+\newcounter{priklad}
+\newenvironment{priklad}
+  {\par\vspace{1.4em}\refstepcounter{priklad}\noindent\textbf{\thepriklad.}\enspace\ignorespaces}
+  {\par}
+
+% Společné zadání skupiny příkladů
+\newenvironment{skupina}
+  {\par\vspace{1.4em}\noindent\bfseries}
+  {\par\nopagebreak}
+
+% Řešení
+\newenvironment{reseni}
+  {\begin{quote}\small}
+  {\end{quote}}
+
+\begin{document}
+
+\begin{center}
+  {\Large\bfseries %%TITLE%%}\\[0.4em]
+  %%SUBTITLE%%
+\end{center}
+
+%%CONTENT%%
+
+\end{document}

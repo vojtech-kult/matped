@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <Head title="Databáze příkladů" />
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="/vendor/katex/katex.min.css">
+</head>
+<body>
+  <AdminNavbar active="examples" />
+
+  <main class="container page">
+    <header class="page-head">
+      <h1>Databáze příkladů</h1>
+      <p class="lead">Vyberte kategorii, zaškrtněte příklady a vygenerujte PDF jen se zadáním a PDF se zadáním i řešením.</p>
+    </header>
+
+    <div class="savebar">
+      <strong id="sel-count">Vybráno: 0</strong>
+      <input id="pdf-title" placeholder="Název sady (volitelné)" maxlength="100" aria-label="Název sady">
+      <button type="button" id="generate" class="btn btn-primary" disabled>Vygenerovat PDF</button>
+      <button type="button" id="clear-selection" class="btn" disabled>Zrušit výběr</button>
+      <span id="message" role="alert"></span>
+    </div>
+
+    <section id="results" class="panel" hidden>
+      <h2 class="panel-title">Vygenerované soubory</h2>
+      <div class="panel-body row" id="result-links"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Kategorie a filtr</h2>
+      <div class="panel-body">
+        <div class="row">
+          <label class="field"><span>Kategorie</span><select id="label"></select></label>
+          <label class="field"><span>Řazení podle obtížnosti</span>
+            <select id="sort">
+              <option value="asc">Od nejlehčího</option>
+              <option value="desc">Od nejtěžšího</option>
+            </select>
+          </label>
+          <label class="field"><span>Obtížnost od</span><input id="min" type="number" min="1" max="10" placeholder="1"></label>
+          <label class="field"><span>Obtížnost do</span><input id="max" type="number" min="1" max="10" placeholder="10"></label>
+          <button type="button" id="select-all" class="btn" disabled>Vybrat všechny zobrazené</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Příklady</h2>
+      <div class="panel-body">
+        <p id="list-hint" class="hint"></p>
+        <ul id="list" class="example-list"></ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Přidat příklad</h2>
+      <div class="panel-body">
+        <form id="create-form" class="form-stack">
+          <div class="row">
+            <label class="field"><span>Kategorie</span><select id="new-label" required></select></label>
+            <label class="field"><span>Obtížnost (1–10)</span><input id="new-difficulty" type="number" min="1" max="10" required></label>
+          </div>
+          <label class="field"><span>LaTeX kód příkladu</span>
+            <textarea id="new-code" class="code-input" rows="14" maxlength="10000" spellcheck="false" required></textarea>
+          </label>
+          <details>
+            <summary>Požadovaný formát</summary>
+<pre>\begin{priklad}
+% ZADANI_START
+Vypočítejte hodnotu výrazu:
+$$20 - [5 + 2 \cdot (8 - 5)] =$$
+% ZADANI_END
+% RESENI_START
+\begin{reseni}
+\textbf{Postup řešení:}
+\begin{align*}
+20 - [5 + 2 \cdot (8 - 5)] &amp;= 20 - [5 + 2 \cdot 3] \\
+&amp;= 20 - [5 + 6] \\
+&amp;= 20 - 11 = 9
+\end{align*}
+\textbf{Výsledek:} $9$
+\end{reseni}
+% RESENI_END
+\end{priklad}</pre>
+          </details>
+          <div><button type="submit" class="btn btn-primary">Přidat do databáze</button></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <AppFooter />
+  <script defer src="/vendor/katex/katex.min.js"></script>
+  <script defer src="/vendor/katex/contrib/auto-render.min.js"></script>
+  <script defer src="examples.js"></script>
+</body>
+</html>

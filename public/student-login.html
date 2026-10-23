@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <Head title="Přihlášení studenta" />
+</head>
+<body>
+  <PublicNavbar active="student-login" />
+
+  <main class="container page">
+    <section class="auth panel">
+      <h1 class="panel-title">Přihlášení studenta</h1>
+      <div class="panel-body">
+        <form id="login-form" class="form-stack" data-endpoint="/api/auth/student/login">
+          <label class="field"><span>Číslo studenta</span><input name="studentNumber" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="username" required></label>
+          <label class="field"><span>Heslo</span><input name="password" type="password" autocomplete="current-password" required></label>
+          <div><button type="submit" class="btn btn-primary">Přihlásit</button></div>
+          <div id="message" role="alert" class="flash"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+  <script src="/js/login.js"></script>
+</body>
+</html>

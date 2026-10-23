@@ -1,0 +1,31 @@
+{
+  "name": "mathped",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/server.js",
+    "start": "node src/server.js",
+    "seed": "node --env-file=.env src/scripts/seed.js",
+    "create-admin": "node --env-file=.env src/scripts/create-admin.js",
+    "daily-report": "node --env-file=.env src/scripts/daily-report.js",
+    "daily-report:send": "node --env-file=.env src/scripts/daily-report.js --send"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "connect-mongo": "^6.0.0",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "katex": "^0.19.0",
+    "mongoose": "^9.11.2"
+  }
+}

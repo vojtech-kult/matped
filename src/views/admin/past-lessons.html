@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <Head title="Proběhlé lekce" />
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <AdminNavbar active="past" />
+
+  <main class="container page">
+    <header class="page-head">
+      <h1>Proběhlé lekce</h1>
+      <p class="lead">Přehled všech lekcí, které už proběhly, včetně docházky a plateb.</p>
+    </header>
+
+    <section class="panel">
+      <h2 class="panel-title">Filtr</h2>
+      <div class="panel-body">
+        <form id="filters" class="row">
+          <label class="field"><span>Od</span><input type="date" id="from"></label>
+          <label class="field"><span>Do</span><input type="date" id="to"></label>
+          <label class="field"><span>Lektor</span>
+            <select id="lecturer"><option value="">Všichni</option></select>
+          </label>
+          <label class="field"><span>Platba</span>
+            <select id="paid">
+              <option value="">Vše</option>
+              <option value="no">Nezaplaceno</option>
+              <option value="yes">Zaplaceno</option>
+            </select>
+          </label>
+          <button type="submit" class="btn btn-primary">Zobrazit</button>
+        </form>
+      </div>
+    </section>
+
+    <div id="message" role="alert" class="flash"></div>
+
+    <section class="panel">
+      <h2 class="panel-title">Lekce</h2>
+      <div class="panel-body">
+        <p id="summary"></p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Datum</th><th>Čas</th><th>Lektor</th><th>Student</th><th>Docházka</th><th>Platba</th><th></th></tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <AppFooter />
+  <script src="past-lessons.js"></script>
+</body>
+</html>

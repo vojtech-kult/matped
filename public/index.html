@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <Head title="Domů" />
+</head>
+<body>
+
+  <!-- Navbar + hero dohromady zaplní celou výšku okna -->
+  <div class="first-screen">
+    <PublicNavbar active="home" />
+
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-inner">
+        <h1 id="hero-title">MatPed</h1>
+        <p class="lead">Doučování matematiky na přijímací zkoušky na SŠ.</p>
+        <div class="cta">
+          <a class="btn btn-primary btn-lg" href="/contact.html?formType=poptavka">Mám zájem</a>
+          <a class="btn btn-lg" href="#kdo-jsme">Více o MatPed</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <main class="home">
+
+    <!-- Kdo jsme? (+ podsekce Proč MatPed) -->
+    <section id="kdo-jsme" class="section">
+      <div class="container">
+        <header class="section-head">
+          <h2>Kdo jsme?</h2>
+        </header>
+
+        <div class="split">
+          <div class="prose">
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          </div>
+          <div class="ph"><span>Obrázek / fotka</span></div>
+        </div>
+
+        <div class="subsection">
+          <h3>Proč MatPed</h3>
+          <div class="cols-3">
+            <FeatureCard title="Lorem ipsum dolor" text="Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium." />
+            <FeatureCard title="Consectetur adipiscing" text="Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur." />
+            <FeatureCard title="Sed do eiusmod" text="Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit." />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Náš tým -->
+    <section id="nas-tym" class="section section-alt">
+      <div class="container">
+        <header class="section-head">
+          <h2>Náš tým</h2>
+          <p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        </header>
+
+        <div class="cols-3">
+          <TeamCard name="Adam" subtitle="Lektor" text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt." />
+          <TeamCard name="Ema" subtitle="Lektorka" text="Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla." />
+          <TeamCard name="Vojta" subtitle="Lektor" text="Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo." />
+        </div>
+      </div>
+    </section>
+
+    <!-- Přidejte se k nám -->
+    <section id="pridejte-se" class="section">
+      <div class="container">
+        <header class="section-head">
+          <h2>Přidejte se k nám</h2>
+          <p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Takhle snadno se k nám dostanete.</p>
+        </header>
+
+        <div class="subsection">
+          <h3>Jak to funguje</h3>
+          <ol class="steps cols-3">
+            <li class="panel"><div class="panel-body card"><span class="wf-box step-no">1</span><h3>Ozvěte se nám</h3><p>Vyplníte krátký formulář.</p></div></li>
+            <li class="panel"><div class="panel-body card"><span class="wf-box step-no">2</span><h3>Dostanete přístup</h3><p>Založíme vám účet s číslem studenta.</p></div></li>
+            <li class="panel"><div class="panel-body card"><span class="wf-box step-no">3</span><h3>Rezervujete lekce</h3><p>Vyberete lektora a termín.</p></div></li>
+          </ol>
+        </div>
+
+        <div class="subsection">
+          <h3>Ceník</h3>
+          <div class="panel price">
+            <div class="panel-body">
+              <p class="price-value">___ Kč</p>
+              <p class="hint">Upřesnění ceny (za lekci, balíčky…) doplnit.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+        <!-- Kontaktní formulář -->
+    <section id="kontakt-formular" class="section section-alt section-center">
+      <div class="container">
+        <header class="section-head">
+          <h2>Ozvěte se nám</h2>
+          <p class="lead">Máte zájem o doučování, dotaz, nebo se s námi chcete podělit o zkušenost? Vyberte typ formuláře a napište nám.</p>
+        </header>
+
+        <div class="form-narrow">
+          <ContactForm />
+        </div>
+      </div>
+    </section>
+    
+  </main>
+
+  <Footer />
+</body>
+</html>

@@ -1,0 +1,90 @@
+<section class="panel" data-contact-form data-sync-url="{{ syncurl }}">
+  <div class="tabs" role="tablist" aria-label="Typ formuláře">
+    <button type="button" role="tab" class="tab" id="tab-poptavka" data-type="poptavka"
+            aria-controls="panel-poptavka" aria-selected="true">Poptávka doučování</button>
+    <button type="button" role="tab" class="tab" id="tab-dotaz" data-type="dotaz"
+            aria-controls="panel-dotaz" aria-selected="false" tabindex="-1">Dotaz</button>
+    <button type="button" role="tab" class="tab" id="tab-hodnoceni" data-type="hodnoceni"
+            aria-controls="panel-hodnoceni" aria-selected="false" tabindex="-1">Hodnocení</button>
+  </div>
+
+  <div class="panel-body">
+
+    <!-- Poptávka doučování -->
+    <div role="tabpanel" id="panel-poptavka" aria-labelledby="tab-poptavka" data-type="poptavka">
+      <h2>Poptávka doučování</h2>
+      <form class="form-stack" data-type="poptavka" data-success="Děkujeme, poptávku jsme přijali a brzy se vám ozveme." novalidate>
+        <label class="field"><span>Jméno</span><input name="name" maxlength="100" autocomplete="name" required></label>
+        <div class="field-row">
+          <label class="field"><span>E-mail</span><input name="email" type="email" maxlength="200" autocomplete="email"></label>
+          <label class="field"><span>Telefon</span><input name="phone" type="tel" maxlength="30" autocomplete="tel"></label>
+        </div>
+        <p class="hint">Vyplňte alespoň jeden z kontaktů (e-mail nebo telefon).</p>
+        <label class="field"><span>Zpráva (nepovinné)</span><textarea name="message" rows="4" maxlength="2000"></textarea></label>
+
+        <div class="hp" aria-hidden="true"><label>Web <input name="website" tabindex="-1" autocomplete="off"></label></div>
+
+        <label class="check">
+          <input type="checkbox" name="consent">
+          <span>Souhlasím se zpracováním osobních údajů za účelem odpovědi na mou poptávku.</span>
+        </label>
+        <div><button type="submit" class="btn btn-primary">Odeslat poptávku</button></div>
+        <div role="alert" class="flash"></div>
+      </form>
+    </div>
+
+    <!-- Dotaz -->
+    <div role="tabpanel" id="panel-dotaz" aria-labelledby="tab-dotaz" data-type="dotaz" hidden>
+      <h2>Dotaz</h2>
+      <form class="form-stack" data-type="dotaz" data-success="Děkujeme, dotaz jsme přijali a ozveme se vám." novalidate>
+        <div class="field-row">
+          <label class="field"><span>E-mail</span><input name="email" type="email" maxlength="200" autocomplete="email"></label>
+          <label class="field"><span>Telefon</span><input name="phone" type="tel" maxlength="30" autocomplete="tel"></label>
+        </div>
+        <p class="hint">Vyplňte alespoň jeden z kontaktů (e-mail nebo telefon).</p>
+        <label class="field"><span>Zpráva</span><textarea name="message" rows="5" maxlength="2000" required></textarea></label>
+
+        <div class="hp" aria-hidden="true"><label>Web <input name="website" tabindex="-1" autocomplete="off"></label></div>
+
+        <label class="check">
+          <input type="checkbox" name="consent">
+          <span>Souhlasím se zpracováním osobních údajů za účelem odpovědi na můj dotaz.</span>
+        </label>
+        <div><button type="submit" class="btn btn-primary">Odeslat dotaz</button></div>
+        <div role="alert" class="flash"></div>
+      </form>
+    </div>
+
+    <!-- Hodnocení -->
+    <div role="tabpanel" id="panel-hodnoceni" aria-labelledby="tab-hodnoceni" data-type="hodnoceni" hidden>
+      <h2>Hodnocení a reference</h2>
+      <form class="form-stack" data-type="hodnoceni" data-success="Děkujeme za vaše hodnocení!" novalidate>
+        <label class="field"><span>Jméno (stačí křestní)</span><input name="name" maxlength="100" autocomplete="given-name" required></label>
+
+        <fieldset class="field rating">
+          <legend>Hodnocení</legend>
+          <div class="stars">
+            <input type="radio" name="rating" id="star5" value="5"><label for="star5" title="5 z 5"><span aria-hidden="true">★</span><span class="sr-only">5 hvězdiček</span></label>
+            <input type="radio" name="rating" id="star4" value="4"><label for="star4" title="4 z 5"><span aria-hidden="true">★</span><span class="sr-only">4 hvězdičky</span></label>
+            <input type="radio" name="rating" id="star3" value="3"><label for="star3" title="3 z 5"><span aria-hidden="true">★</span><span class="sr-only">3 hvězdičky</span></label>
+            <input type="radio" name="rating" id="star2" value="2"><label for="star2" title="2 z 5"><span aria-hidden="true">★</span><span class="sr-only">2 hvězdičky</span></label>
+            <input type="radio" name="rating" id="star1" value="1"><label for="star1" title="1 z 5"><span aria-hidden="true">★</span><span class="sr-only">1 hvězdička</span></label>
+          </div>
+        </fieldset>
+
+        <label class="field"><span>Vaše zkušenost</span><textarea name="message" rows="5" maxlength="2000" required></textarea></label>
+
+        <div class="hp" aria-hidden="true"><label>Web <input name="website" tabindex="-1" autocomplete="off"></label></div>
+
+        <label class="check">
+          <input type="checkbox" name="consent">
+          <span>Souhlasím s uložením hodnocení a s jeho případným zveřejněním na webu pod uvedeným jménem.</span>
+        </label>
+        <div><button type="submit" class="btn btn-primary">Odeslat hodnocení</button></div>
+        <div role="alert" class="flash"></div>
+      </form>
+    </div>
+
+  </div>
+</section>
+<script src="/js/contact.js"></script>

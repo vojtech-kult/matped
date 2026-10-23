@@ -1,0 +1,45 @@
+  /* Jen prvky specifické pro administraci */
+  tr.changed td { background: #fef9c3; }
+  tr.unpaid td { background: #fef2f2; }
+  .paid-yes { color: var(--wf-ok); font-weight: 600; }
+  .paid-no { color: var(--wf-err); font-weight: 600; }
+
+  details.level { margin: .5rem 0; padding: .4rem .8rem; border: 1px solid #ccc; border-radius: 6px; }
+  details.level.current { border: 2px solid #84cc16; }
+  details.level.completed summary { color: var(--wf-ok); }
+  details.level summary { cursor: pointer; font-weight: 600; }
+  .checks label { display: block; padding: .15rem 0; }
+  .checks label.changed { background: #fef9c3; }
+  .test-row { margin-top: .5rem; padding-top: .5rem; border-top: 1px dashed #bbb; }
+  .cell.changed .toggle { box-shadow: 0 0 0 2px #b45309; }
+
+  /* Databáze příkladů */
+.example-list { list-style: none; margin: 0; padding: 0; }
+.example { display: flex; gap: 1rem; align-items: flex-start; padding: .75rem .5rem; border-bottom: 1px solid var(--wf-box); }
+.example.selected { background: var(--wf-bg); }
+.example-main { flex: 1; min-width: 0; }
+.example-pick { display: flex; gap: .75rem; cursor: pointer; }
+.example-pick input { margin-top: .4rem; }
+.example-body { min-width: 0; flex: 1; }
+.example-preview { white-space: pre-wrap; overflow-x: auto; }
+.example-meta { color: var(--wf-muted); font-size: .85rem; }
+.example-error { color: var(--wf-err); font-size: .9rem; }
+.example details { margin-top: .4rem; font-size: .85rem; }
+.example pre, details pre { overflow-x: auto; padding: .5rem; background: var(--wf-bg); border: 1px solid var(--wf-box); }
+.code-input { width: 100%; font-family: ui-monospace, Consolas, monospace; }
+#result-links a { margin-right: .5rem; }
+
+/* Nejbližší lekce lektora (rozvrh) */
+.upcoming { list-style: none; margin: 0; padding: 0; }
+.upcoming-item { padding: .6rem .2rem; border-bottom: 1px solid var(--wf-box); }
+.upcoming-item:last-child { border-bottom: 0; }
+.upcoming-head { display: flex; flex-wrap: wrap; gap: .25rem .75rem; align-items: baseline; }
+.upcoming-when { font-weight: 700; }
+.upcoming-count { color: var(--wf-muted); font-size: .9rem; }
+.upcoming-today { padding: 0 .5rem; background: var(--wf-dark); color: #fff; font-size: .8rem; }
+.upcoming-students { list-style: none; margin: .3rem 0 0; padding-left: 1rem; }
+.upcoming-students li { padding: .1rem 0; }
+
+/* Přehled studentů */
+tr.selected-row td { background: var(--wf-bg); font-weight: 600; }
+#detail, #lessons, #progress { scroll-margin-top: 4.5rem; } /* kvůli přilepené liště */
