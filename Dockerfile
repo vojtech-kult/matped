@@ -1,5 +1,5 @@
 # Použijeme oficiální Node.js (verze 20) na Debianu
-FROM node:20-bullseye
+FROM node:20-bookworm
 
 # Nainstalujeme LaTeX (základní balíčky + extra fonty a doplňky)
 RUN apt-get update && apt-get install -y \
