@@ -19,4 +19,4 @@ RUN npm install
 COPY . .
 
 # Spustíme váš server (upravte cestu, pokud máte server.js v podsložce)
-CMD ["node", "server.js"]
+CMD ["node", "src/server.js"]
