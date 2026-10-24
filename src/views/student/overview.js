@@ -46,6 +46,7 @@ function renderHero(data) {
   $('badge').textContent = courseCompleted ? '★' : level.level;
   $('level-no').textContent = courseCompleted ? 'Kurz dokončen' : `Level ${level.level} z ${levels.length}`;
   $('level-title').textContent = level.title;
+  if (data.label) $('level-no').textContent += ` · ${data.label}`;
   $('bar-fill').style.width = `${percent}%`;
   $('bar').setAttribute('aria-valuenow', String(percent));
   $('xp').textContent = `${xp} / ${maxXp} XP`;
@@ -85,6 +86,13 @@ function levelElement(l) {
 Promise.all([api('/api/student/me'), api('/api/student/progress')])
   .then(([me, progress]) => {
     renderMe(me);
+    if (progress.enabled === false) {
+      // vlastní kurikulum: level systém není aktivní
+      $('progress-card').hidden = true;
+      $('levels-card').hidden = true;
+      $('no-levels').hidden = false;
+      return;
+    }
     renderHero(progress);
     $('levels').replaceChildren(...progress.levels.map(levelElement));
   })

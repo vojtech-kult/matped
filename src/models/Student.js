@@ -10,6 +10,7 @@ const studentSchema = new mongoose.Schema(
       validate: { validator: Number.isInteger, message: 'Kredity musí být celé číslo' },
     },
     passwordHash: { type: String, required: true, select: false },
+    curriculum: { type: String, enum: ['prijimacky', 'maturita', 'vlastni'], default: 'prijimacky' },
   },
   { timestamps: true }
 );

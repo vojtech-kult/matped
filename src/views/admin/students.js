@@ -6,7 +6,7 @@ const REQUIRED_IDS = [
   'create-open', 'students-table', 'students-rows', 'students-empty', 'detail', 'detail-title', 'detail-close',
   'detail-tabs', 'lecturer-filter', 'lecturer-filter-wrap', 'past-table', 'past-rows', 'past-empty',
   'future-table', 'future-rows', 'future-empty', 'progress-summary', 'levels',
-  'create-dialog', 'create-form', 'edit-dialog', 'edit-form', 'delete-student', 'savebar', 'save', 'discard', 'dirty',
+  'create-dialog', 'create-form', 'gen-number', 'gen-password', 'create-password', 'edit-dialog', 'edit-form', 'delete-student', 'savebar', 'save', 'discard', 'dirty',
 ];
 const missing = REQUIRED_IDS.filter((id) => !$(id));
 if (missing.length) {
@@ -29,6 +29,8 @@ const state = {
   open: new Set(),
   busy: false,
 };
+
+const CURRICULUM_LABELS = { prijimacky: 'Přijímačky', maturita: 'Maturita', vlastni: 'Vlastní' };
 
 const lessonKey = (l) => `${l.lecturer}|${l.date}|${l.hour}`;
 const diffCount = (a, b) => [...a].filter((x) => !b.has(x)).length + [...b].filter((x) => !a.has(x)).length;
@@ -149,13 +151,15 @@ function renderStudents() {
   $('students-rows').replaceChildren(
     ...state.students.map((s) => {
       const level = el('span');
-      if (s.courseCompleted) {
-        level.textContent = 'Kurz dokončen ✓';
+      if (s.curriculum === 'vlastni') {
+        level.textContent = 'Vlastní (bez levelů)';
+      } else if (s.courseCompleted) {
+        level.textContent = `${CURRICULUM_LABELS[s.curriculum] ?? 'Přijímačky'}: kurz dokončen ✓`;
       } else {
         const bar = el('progress');
         bar.max = 100;
         bar.value = s.levelPercent;
-        level.append(`Level ${s.level} · ${s.levelPercent} % `, bar);
+        level.append(`${CURRICULUM_LABELS[s.curriculum] ?? 'Přijímačky'} · Level ${s.level} · ${s.levelPercent} % `, bar);
       }
       const tr = el('tr');
       if (s.studentNumber === state.number) tr.className = 'selected';
@@ -262,10 +266,15 @@ function renderProgress() {
     $('levels').replaceChildren();
     return;
   }
+  if (state.progress.enabled === false) {
+    $('progress-summary').textContent = 'Student má vlastní kurikulum, level systém není aktivní. Kurikulum změníte u studenta v tabulce (Upravit).';
+    $('levels').replaceChildren();
+    return;
+  }
   const v = progressView();
-  const { maxXp } = state.progress;
+  const { maxXp, label } = state.progress;
   $('progress-summary').textContent = v.current
-    ? `Aktuální level: ${v.current.level} z ${v.levels.length}. XP: ${v.xp} / ${maxXp}`
+    ? `${label}. Aktuální level: ${v.current.level} z ${v.levels.length}. XP: ${v.xp} / ${maxXp}`
     : `Kurz je dokončen. XP: ${v.xp} / ${maxXp}`;
   $('levels').replaceChildren(...v.levels.map(levelElement));
 }
@@ -305,6 +314,7 @@ $('students-rows').addEventListener('click', (e) => {
   const form = $('edit-form');
   form.elements.name.value = student.name;
   form.elements.creditsDelta.value = 0;
+  form.elements.curriculum.value = student.curriculum ?? 'prijimacky';
   $('credits-now').textContent = `Aktuálně: ${student.credits ?? 0}`;
   updateCreditsPreview();
   $('edit-heading').textContent = `Upravit: ${student.name} (#${number})`;
@@ -319,6 +329,32 @@ function updateCreditsPreview() {
 }
 $('edit-form').elements.creditsDelta.addEventListener('input', updateCreditsPreview);
 
+// Pomocníci pro nové studenty: náhodné číslo (které ještě nikdo nemá) a heslo z 10 malých písmen
+function randomInt(max) {
+  const limit = Math.floor(0x100000000 / max) * max; // zahazujeme hodnoty, které by zkreslily rozdělení
+  const buf = new Uint32Array(1);
+  do crypto.getRandomValues(buf); while (buf[0] >= limit);
+  return buf[0] % max;
+}
+
+$('gen-number').addEventListener('click', () => {
+  const used = new Set(state.students.map((s) => s.studentNumber));
+  let number;
+  do number = String(100000 + randomInt(900000)); while (used.has(number));
+  $('create-form').elements.studentNumber.value = number;
+});
+
+$('gen-password').addEventListener('click', () => {
+  let password = '';
+  for (let i = 0; i < 10; i++) password += String.fromCharCode(97 + randomInt(26));
+  const input = $('create-password');
+  input.value = password;
+  input.type = 'text'; // admin si ho musí přečíst a předat studentovi
+});
+
+// při zavření okna se heslo zase skryje
+$('create-dialog').addEventListener('close', () => { $('create-password').type = 'password'; });
+
 $('create-open').addEventListener('click', () => $('create-dialog').showModal());
 
 dialogSubmit($('create-form'), $('create-dialog'), async (fd) => {
@@ -327,6 +363,7 @@ dialogSubmit($('create-form'), $('create-dialog'), async (fd) => {
     name: fd.get('name').trim(),
     password: fd.get('password'),
     credits: Number(fd.get('credits')),
+    curriculum: fd.get('curriculum'),
   });
   await loadStudents();
   Admin.toast('Student vytvořen.');
@@ -334,7 +371,7 @@ dialogSubmit($('create-form'), $('create-dialog'), async (fd) => {
 
 dialogSubmit($('edit-form'), $('edit-dialog'), async (fd) => {
   const number = state.editing;
-  await api('PATCH', `/api/admin/students/${enc(number)}`, { name: fd.get('name').trim(), creditsDelta: Number(fd.get('creditsDelta')) || 0 });
+  await api('PATCH', `/api/admin/students/${enc(number)}`, { name: fd.get('name').trim(), creditsDelta: Number(fd.get('creditsDelta')) || 0, curriculum: fd.get('curriculum') });
   const password = fd.get('password');
   if (password) await api('PATCH', `/api/admin/students/${enc(number)}/password`, { password });
   await loadStudents();

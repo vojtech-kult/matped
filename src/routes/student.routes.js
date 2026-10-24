@@ -10,6 +10,7 @@ import { Progress } from '../models/Progress.js';
 import { buildProgress } from '../utils/progress.js';
 import { Student } from '../models/Student.js';
 import { todayInPrague, hourInPrague } from '../utils/calendar.js';
+import { curriculumOf } from '../utils/progress.js';
 
 const router = Router();
 router.use(requireRole('student'));
@@ -160,8 +161,10 @@ router.delete('/bookings', async (req, res) => {
 
 // Vlastní postup v kurzu
 router.get('/progress', async (req, res) => {
+  const student = await Student.findById(req.session.userId).select('curriculum').lean();
   const doc = await Progress.findOne({ student: req.session.userId }).lean();
-  const progress = buildProgress(doc);
+  const progress = buildProgress(doc, curriculumOf(student));
+  if (!progress.enabled) return res.json({ enabled: false, curriculum: progress.curriculum });
 
   res.json({
     ...progress,

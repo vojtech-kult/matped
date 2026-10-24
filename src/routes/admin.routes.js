@@ -10,7 +10,9 @@ import { LessonRecord } from '../models/LessonRecord.js';
 import { LECTURERS, CAPACITY } from '../config/schedule.js';
 import { isValidDate, todayInPrague } from '../utils/calendar.js';
 import { Progress } from '../models/Progress.js';
-import { buildProgress, applyProgressUpdate, SECTION_LEVEL, LEVEL_DEFS } from '../utils/progress.js';
+import { buildProgress, applyProgressUpdate } from '../utils/progress.js';
+import { saveTrackProgress, curriculumOf } from '../utils/progress.js';
+import { CURRICULUM_KEYS } from '../config/tracks.js';
 
 const router = Router();
 
@@ -24,7 +26,7 @@ const BAD_CREDITS = { error: 'Kredity musí být celé číslo 0 až 100 000' };
 router.get('/students', async (req, res) => {
   const students = await Student.find()
     .sort({ studentNumber: 1 })
-    .select('studentNumber name createdAt credits')
+    .select('studentNumber name createdAt credits curriculum')
     .lean();
 
   const progressDocs = await Progress.find({ student: { $in: students.map((s) => s._id) } })
@@ -34,12 +36,13 @@ router.get('/students', async (req, res) => {
 
   res.json(
     students.map((s) => {
-      const progress = buildProgress(byStudent.get(String(s._id)));
+      const progress = buildProgress(byStudent.get(String(s._id)), curriculumOf(s));
       const level = progress.levels.find((l) => l.level === progress.currentLevel);
       return {
         studentNumber: s.studentNumber,
         name: s.name,
         createdAt: s.createdAt,
+        curriculum: curriculumOf(s),
         level: progress.currentLevel, // null = kurz dokončen
         levelPercent: level ? level.percent : 100,
         courseCompleted: progress.courseCompleted,
@@ -52,17 +55,20 @@ router.get('/students', async (req, res) => {
 router.post('/students', async (req, res) => {
   const { studentNumber, name, password } = req.body ?? {};
   const credits = req.body?.credits ?? 0;
+  const curriculum = req.body?.curriculum ?? 'prijimacky';
   if (!isStudentNumber(studentNumber)) return res.status(400).json(BAD_NUMBER);
   if (!isName(name)) return res.status(400).json({ error: 'Jméno musí mít 1 až 100 znaků' });
   if (!isValidPassword(password)) return res.status(400).json(BAD_PASSWORD);
-  if (!isCredits(credits)) return res.status(400).json(BAD_CREDITS)
+  if (!isCredits(credits)) return res.status(400).json(BAD_CREDITS);
+  if (!CURRICULUM_KEYS.includes(curriculum)) return res.status(400).json({ error: 'Neplatné kurikulum' });
 
   try {
     await Student.create({
       studentNumber,
       name: name.trim(),
+      credits,
+      curriculum,
       passwordHash: await hashPassword(password),
-      credits: credits,
     });
   } catch (err) {
     if (err.code === 11000) {
@@ -109,6 +115,10 @@ router.patch('/students/:studentNumber', async (req, res) => {
     // Podmínka ve filtru hlídá, aby počet kreditů nešel pod 0 ani nad 100 000
     filter.credits = creditsDelta < 0 ? { $gte: -creditsDelta } : { $lte: 100000 - creditsDelta };
     update.$inc = { credits: creditsDelta };
+  }
+  if (req.body?.curriculum !== undefined) {
+    if (!CURRICULUM_KEYS.includes(req.body.curriculum)) return res.status(400).json({ error: 'Neplatné kurikulum' });
+    set.curriculum = req.body.curriculum;
   }
   if (Object.keys(set).length) update.$set = set;
   if (!Object.keys(update).length) return res.status(400).json({ error: 'Nic k uložení' });
@@ -347,54 +357,30 @@ router.get('/lessons/detail', async (req, res) => {
 });
 
 
-// Postup studenta v kurzu
 router.get('/students/:studentNumber/progress', async (req, res) => {
   const { studentNumber } = req.params;
   if (!isStudentNumber(studentNumber)) return res.status(400).json(BAD_NUMBER);
 
-  const student = await Student.findOne({ studentNumber }).select('studentNumber name').lean();
+  const student = await Student.findOne({ studentNumber }).select('studentNumber name curriculum').lean();
   if (!student) return res.status(404).json({ error: 'Student nenalezen' });
 
   const doc = await Progress.findOne({ student: student._id }).lean();
   res.json({
     student: { studentNumber: student.studentNumber, name: student.name },
-    ...buildProgress(doc),
+    ...buildProgress(doc, curriculumOf(student)),
   });
 });
 
-// Uložení celého postupu studenta najednou
 router.put('/students/:studentNumber/progress', async (req, res) => {
   const { studentNumber } = req.params;
   if (!isStudentNumber(studentNumber)) return res.status(400).json(BAD_NUMBER);
 
-  const { sections, tests } = req.body ?? {};
-  if (
-    !Array.isArray(sections) || !Array.isArray(tests) ||
-    sections.length > 500 || tests.length > 50 ||
-    !sections.every((id) => typeof id === 'string' && SECTION_LEVEL.has(id)) ||
-    !tests.every((level) => Number.isInteger(level) && LEVEL_DEFS.has(level))
-  ) {
-    return res.status(400).json({ error: 'Neplatná data postupu' });
-  }
-
-  const done = new Set(sections);
-  const passed = [...new Set(tests)].sort((a, b) => a - b);
-  for (const level of passed) {
-    if (!LEVEL_DEFS.get(level).sections.every((s) => done.has(s.id))) {
-      return res.status(409).json({
-        error: `Test levelu ${level} nelze uložit, dokud nejsou splněny všechny podúkoly`,
-      });
-    }
-  }
-
-  const student = await Student.findOne({ studentNumber }).select('_id').lean();
+  const student = await Student.findOne({ studentNumber }).select('_id curriculum').lean();
   if (!student) return res.status(404).json({ error: 'Student nenalezen' });
 
-  await applyProgressUpdate(
-    student._id,
-    { $set: { sections: [...done], tests: passed } },
-    { upsert: true }
-  );
+  const { sections, tests } = req.body ?? {};
+  const error = await saveTrackProgress(student._id, curriculumOf(student), sections, tests);
+  if (error) return res.status(error.startsWith('Student má') ? 409 : 400).json({ error });
   res.json({ ok: true });
 });
 

@@ -166,6 +166,7 @@ function levelPanel(student) {
   const entry = state.levels.get(student.studentNumber);
   const box = el('div');
   box.append(el('h2', '', `${student.name} (#${student.studentNumber})`));
+  if (entry.progress.label) box.append(el('p', 'hint', `Kurikulum: ${entry.progress.label}`));
   const attDirty = state.att.has(student.studentNumber);
   if (state.detail.past) {
     const current = attDirty ? state.att.get(student.studentNumber) : student.attended;
@@ -182,8 +183,9 @@ function levelPanel(student) {
     box.append(el('p', 'hint', 'Docházku lze zapsat od dne konání lekce.'));
   }
 
-  const cur = currentLevelOf(entry);
-  if (cur) addLevelEditor(box, entry, cur);
+  const cur = entry.progress.enabled === false ? null : currentLevelOf(entry);
+  if (entry.progress.enabled === false) box.append(el('p', 'hint', 'Student má vlastní kurikulum, level systém není aktivní.'));
+  else if (cur) addLevelEditor(box, entry, cur);
   else box.append(el('p', '', 'Kurz je dokončen, level není co upravovat.'));
 
   const dirty = attDirty || levelDirty(entry);

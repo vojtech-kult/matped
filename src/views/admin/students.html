@@ -73,9 +73,28 @@
     <div class="modal-box">
       <h2 id="create-heading">Nový student</h2>
       <form id="create-form" class="form-stack">
-        <label class="field"><span>Číslo studenta (6 číslic)</span><input name="studentNumber" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required></label>
+        <div class="field">
+          <span>Číslo studenta (6 číslic)</span>
+          <div class="row">
+            <input name="studentNumber" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required style="flex:1;min-width:8rem" aria-label="Číslo studenta">
+            <button type="button" id="gen-number" class="btn btn-sm">Vygenerovat číslo</button>
+          </div>
+        </div>
         <label class="field"><span>Jméno</span><input name="name" maxlength="100" required></label>
-        <label class="field"><span>Heslo</span><input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
+        <div class="field">
+          <span>Heslo (min. 8 znaků)</span>
+          <div class="row">
+            <input name="password" id="create-password" type="password" minlength="8" autocomplete="new-password" required style="flex:1;min-width:8rem" aria-label="Heslo">
+            <button type="button" id="gen-password" class="btn btn-sm">Vygenerovat heslo</button>
+          </div>
+        </div>
+        <label class="field"><span>Kurikulum</span>
+          <select name="curriculum">
+            <option value="prijimacky">Přijímačky</option>
+            <option value="maturita">Maturita</option>
+            <option value="vlastni">Vlastní (bez levelů)</option>
+          </select>
+        </label>
         <label class="field"><span>Počáteční kredity</span><input name="credits" type="number" min="0" max="100000" step="1" value="0" required></label>
         <div class="flash" role="alert"></div>
         <div class="row"><button type="submit" class="btn btn-primary">Vytvořit</button><button type="button" class="btn" data-close>Zrušit</button></div>
@@ -88,6 +107,13 @@
       <h2 id="edit-heading">Upravit studenta</h2>
       <form id="edit-form" class="form-stack">
         <label class="field"><span>Jméno</span><input name="name" maxlength="100" required></label>
+        <label class="field"><span>Kurikulum</span>
+          <select name="curriculum">
+            <option value="prijimacky">Přijímačky</option>
+            <option value="maturita">Maturita</option>
+            <option value="vlastni">Vlastní (bez levelů)</option>
+          </select>
+        </label>
         <div class="field">
           <span>Kredity</span>
           <div class="row"><strong id="credits-now"></strong><span class="hint" id="credits-after"></span></div>
