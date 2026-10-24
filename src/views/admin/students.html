@@ -1,138 +1,110 @@
 <!doctype html>
 <html lang="cs">
 <head>
-  <Head title="Přehled studentů" />
-  <link rel="stylesheet" href="admin.css">
+  <Head title="Studenti" />
+  <link rel="stylesheet" href="/css/admin-app.css">
 </head>
-<body>
-  <AdminNavbar active="students" />
+<body class="app">
+  <AdminTopbar />
+  <div class="app-body">
+    <AdminSidebar active="students" />
 
-  <main class="container page">
-    <header class="page-head">
-      <h1>Přehled studentů</h1>
-      <p class="lead">Všichni studenti na jednom místě. Níže založíte a upravíte účty a pro vybraného studenta uvidíte lekce, platby a postup v kurzu.</p>
-    </header>
+    <main class="app-main">
+      <header class="app-head">
+        <h1>Studenti</h1>
+        <p class="lead">Všichni aktuální studenti. Po najetí na řádek upravíte údaje nebo otevřete detail.</p>
+      </header>
 
-    <section class="panel">
-      <h2 class="panel-title">Studenti</h2>
-      <div class="panel-body">
-        <div class="row" style="margin-bottom:.75rem">
-          <button type="button" id="open-create" class="btn btn-primary">+ Nový student</button>
+      <section class="card">
+        <div class="card-head">
+          <h2>Přehled studentů</h2>
+          <button type="button" id="create-open" class="btn btn-primary">Přidat studenta</button>
         </div>
-        <div id="flash" role="alert" class="flash"></div>
-        <div class="table-wrap">
-          <table class="table">
-            <thead><tr><th>Číslo</th><th>Jméno</th><th>Level</th><th></th></tr></thead>
-            <tbody id="students"></tbody>
+        <div class="tbl-wrap">
+          <table class="tbl" id="students-table" hidden>
+            <thead><tr><th>Číslo</th><th>Jméno</th><th>Aktuální level</th><th>Kredity</th><th class="actions"></th></tr></thead>
+            <tbody id="students-rows"></tbody>
           </table>
         </div>
-        <p id="students-empty" hidden>Zatím nejsou žádní studenti.</p>
-      </div>
-    </section>
+        <p id="students-empty" class="empty-note" hidden>Zatím žádní studenti.</p>
+      </section>
 
-    <section id="detail" class="panel">
-      <h2 class="panel-title">Detail studenta</h2>
-      <div class="panel-body">
-        <div class="row">
-          <label class="field"><span>Vyberte studenta</span><select id="student"></select></label>
-          <nav class="row" aria-label="Sekce na stránce">
-            <a href="#lessons">Lekce a platby</a>
-            <a href="#progress">Postup v kurzu</a>
-          </nav>
+      <section class="card" id="detail" hidden>
+        <div class="card-head">
+          <h2 id="detail-title"></h2>
+          <button type="button" id="detail-close" class="btn btn-sm">Zavřít detail</button>
         </div>
-      </div>
-    </section>
-
-    <SaveBar />
-
-    <section id="lessons" class="panel">
-      <h2 class="panel-title">Lekce, docházka a platby</h2>
-      <div class="panel-body">
-        <p id="lessons-summary"></p>
-
-        <h3>Proběhlé lekce</h3>
-        <div class="table-wrap">
-          <table class="table">
-            <thead><tr><th>Datum</th><th>Čas</th><th>Lektor</th><th>Docházka</th><th>Zaplaceno</th></tr></thead>
-            <tbody id="past"></tbody>
-          </table>
+        <div class="card-sub">
+          <div class="seg" id="detail-tabs" role="group" aria-label="Část detailu">
+            <button type="button" data-tab="past" aria-pressed="true">Proběhlé lekce</button>
+            <button type="button" data-tab="future" aria-pressed="false">Budoucí lekce</button>
+            <button type="button" data-tab="progress" aria-pressed="false">Postup v kurzu</button>
+          </div>
+          <label class="field" id="lecturer-filter-wrap"><span>Lektor</span><select id="lecturer-filter"></select></label>
         </div>
-        <p id="past-empty" hidden>Zatím žádné proběhlé lekce.</p>
 
-        <h3 style="margin-top:1.25rem">Naplánované lekce</h3>
-        <div class="table-wrap">
-          <table class="table">
-            <thead><tr><th>Datum</th><th>Čas</th><th>Lektor</th><th>Zaplaceno</th></tr></thead>
-            <tbody id="upcoming"></tbody>
-          </table>
+        <div data-panel="past">
+          <div class="tbl-wrap"><table class="tbl" id="past-table" hidden>
+            <thead><tr><th>Datum</th><th>Čas</th><th>Lektor</th><th>Docházka</th></tr></thead>
+            <tbody id="past-rows"></tbody>
+          </table></div>
+          <p id="past-empty" class="empty-note" hidden>Žádné proběhlé lekce.</p>
         </div>
-        <p id="upcoming-empty" hidden>Žádné naplánované lekce.</p>
-      </div>
-    </section>
+        <div data-panel="future" hidden>
+          <div class="tbl-wrap"><table class="tbl" id="future-table" hidden>
+            <thead><tr><th>Datum</th><th>Čas</th><th>Lektor</th></tr></thead>
+            <tbody id="future-rows"></tbody>
+          </table></div>
+          <p id="future-empty" class="empty-note" hidden>Žádné budoucí lekce.</p>
+        </div>
+        <div data-panel="progress" hidden>
+          <div class="card-body">
+            <p id="progress-summary" class="hint"></p>
+            <div id="levels"></div>
+          </div>
+        </div>
+      </section>
 
-    <section id="progress" class="panel">
-      <h2 class="panel-title">Postup v kurzu (level)</h2>
-      <div class="panel-body">
-        <p id="progress-summary"></p>
-        <div id="levels"></div>
-      </div>
-    </section>
-  </main>
+      <AdminSaveBar />
+    </main>
+  </div>
 
-
-    <dialog id="create-dialog" class="modal" aria-labelledby="create-title">
+  <dialog id="create-dialog" class="modal" aria-labelledby="create-heading">
     <div class="modal-box">
-      <h2 id="create-title">Nový student</h2>
+      <h2 id="create-heading">Nový student</h2>
       <form id="create-form" class="form-stack">
-        <label class="field"><span>Číslo studenta</span><input name="studentNumber" placeholder="6 číslic" inputmode="numeric" pattern="\d{6}" maxlength="6" required></label>
-        <label class="field"><span>Jméno</span><input name="name" maxlength="100" autocomplete="off" required></label>
-        <label class="field"><span>Heslo</span><input name="password" placeholder="min. 8 znaků" autocomplete="off" required></label>
-        <div class="row">
-          <button type="submit" class="btn btn-primary">Vytvořit</button>
-          <button type="button" class="btn" data-close>Zrušit</button>
-        </div>
-        <div id="create-flash" role="alert" class="flash"></div>
+        <label class="field"><span>Číslo studenta (6 číslic)</span><input name="studentNumber" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required></label>
+        <label class="field"><span>Jméno</span><input name="name" maxlength="100" required></label>
+        <label class="field"><span>Heslo</span><input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
+        <label class="field"><span>Počáteční kredity</span><input name="credits" type="number" min="0" max="100000" step="1" value="0" required></label>
+        <div class="flash" role="alert"></div>
+        <div class="row"><button type="submit" class="btn btn-primary">Vytvořit</button><button type="button" class="btn" data-close>Zrušit</button></div>
       </form>
     </div>
   </dialog>
 
-  <dialog id="edit-dialog" class="modal" aria-labelledby="edit-title">
+  <dialog id="edit-dialog" class="modal" aria-labelledby="edit-heading">
     <div class="modal-box">
-      <h2 id="edit-title">Úprava studenta</h2>
-      <div id="edit-flash" role="alert" class="flash"></div>
-
-      <section class="modal-section">
-        <h3>Změna jména</h3>
-        <form id="name-form" class="form-stack">
-          <label class="field"><span>Nové jméno</span><input name="name" maxlength="100" autocomplete="off" required></label>
-          <div><button type="submit" class="btn btn-primary">Změnit jméno</button></div>
-        </form>
-      </section>
-
-      <section class="modal-section">
-        <h3>Změna hesla</h3>
-        <form id="password-form" class="form-stack">
-          <label class="field"><span>Nové heslo</span><input name="password" placeholder="min. 8 znaků" autocomplete="off" required></label>
-          <div><button type="submit" class="btn btn-primary">Změnit heslo</button></div>
-        </form>
-      </section>
-
-      <section class="modal-section">
-        <h3>Smazání studenta</h3>
-        <form id="delete-form" class="form-stack">
-          <p class="hint">Smaže se i jeho docházka, platby a postup v kurzu. Nelze vrátit.</p>
-          <div><button type="submit" class="btn btn-danger">Smazat studenta</button></div>
-        </form>
-      </section>
-
-      <div class="row modal-section">
-        <button type="button" class="btn" data-close>Zavřít</button>
-      </div>
+      <h2 id="edit-heading">Upravit studenta</h2>
+      <form id="edit-form" class="form-stack">
+        <label class="field"><span>Jméno</span><input name="name" maxlength="100" required></label>
+        <div class="field">
+          <span>Kredity</span>
+          <div class="row"><strong id="credits-now"></strong><span class="hint" id="credits-after"></span></div>
+        </div>
+        <label class="field"><span>Přidat nebo odebrat kredity (záporné číslo odebere, např. -2)</span><input name="creditsDelta" type="number" min="-100000" max="100000" step="1" value="0"></label>
+        <label class="field"><span>Nové heslo (nechte prázdné, pokud se nemění)</span><input name="password" type="password" minlength="8" autocomplete="new-password"></label>
+        <div class="flash" role="alert"></div>
+        <div class="row">
+          <button type="submit" class="btn btn-primary">Uložit</button>
+          <button type="button" class="btn" data-close>Zrušit</button>
+          <button type="button" id="delete-student" class="btn" style="margin-left:auto">Smazat studenta</button>
+        </div>
+      </form>
     </div>
   </dialog>
 
-
-  <AppFooter />
+  <script src="shared.js"></script>
   <script src="students.js"></script>
 </body>
 </html>

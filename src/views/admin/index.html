@@ -1,40 +1,43 @@
 <!doctype html>
 <html lang="cs">
 <head>
-  <Head title="Přehled pro lektory" />
-  <link rel="stylesheet" href="admin.css">
+  <Head title="Rozvrh" />
+  <link rel="stylesheet" href="/css/admin-app.css">
   <link rel="stylesheet" href="schedule.css">
 </head>
-<body>
-  <AdminNavbar active="lecturers" />
+<body class="app">
+  <AdminTopbar />
+  <div class="app-body">
+    <AdminSidebar active="schedule" />
 
-  <main class="container page">
-    <header class="page-head">
-      <h1>Přehled pro lektory</h1>
-      <p class="lead">Vyberte, který lektor jste. Uvidíte nadcházející lekce, týdenní rozvrh a odučené lekce.</p>
-    </header>
+    <main class="app-main">
+      <header class="app-head">
+        <h1>Rozvrh</h1>
+        <p class="lead">Nejbližší lekce a týdenní kalendář lektora vybraného v horní liště.</p>
+      </header>
 
-    <section class="panel">
-      <h2 class="panel-title">Lektor</h2>
-      <div class="panel-body">
-        <label class="field"><span>Kdo jste</span><select id="lecturer"></select></label>
-      </div>
-    </section>
+      <section class="card">
+        <div class="card-head">
+          <h2>Nejbližší lekce <span class="hint" id="upcoming-who"></span></h2>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="upcoming-table" hidden>
+            <thead><tr><th>Datum</th><th>Čas</th><th>Přihlášení studenti</th><th class="actions"></th></tr></thead>
+            <tbody id="upcoming-rows"></tbody>
+          </table>
+        </div>
+        <p id="upcoming-empty" class="empty-note" hidden>Zatím žádná naplánovaná lekce s přihlášeným studentem.</p>
+      </section>
 
-    <SaveBar />
-
-    <section class="panel">
-      <h2 class="panel-title">Nejbližší lekce s přihlášenými studenty</h2>
-      <div class="panel-body">
-        <p id="upcoming-hint" class="hint"></p>
-        <ul id="upcoming-list" class="upcoming"></ul>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2 class="panel-title">Týdenní kalendář</h2>
-      <div class="panel-body">
-        <div class="controls">
+      <section class="card">
+        <div class="card-head">
+          <h2>Týdenní kalendář <span class="hint" id="cal-who"></span></h2>
+          <div class="seg" role="group" aria-label="Co změní klik na políčko">
+            <button type="button" data-mode="all" aria-pressed="true">Pravidelně (celý rok)</button>
+            <button type="button" data-mode="week" aria-pressed="false">Jen tento týden</button>
+          </div>
+        </div>
+        <div class="card-body">
           <div class="week-nav">
             <button type="button" id="prev-week" class="btn" aria-label="Předchozí týden">◀</button>
             <label class="field"><span>Rok</span><input id="year" type="number" min="2000" max="2100"></label>
@@ -43,59 +46,45 @@
             <button type="button" id="this-week" class="btn">Aktuální týden</button>
             <span id="week-range"></span>
           </div>
+          <p id="mode-hint" class="hint"></p>
 
-          <fieldset class="mode">
-            <legend>Co změní klik na políčko</legend>
-            <label><input type="radio" name="mode" value="all" checked> Pravidelně (všechny týdny v roce)</label><br>
-            <label><input type="radio" name="mode" value="week"> Jen zobrazený týden</label>
-          </fieldset>
+          <div class="grid-wrap"><div id="grid" class="grid"></div></div>
+
+          <p class="legend">
+            <span class="chip on"></span> pravidelně, nikdo přihlášen
+            <span class="chip on booked"></span> pravidelně, student přihlášen
+            <span class="chip once"></span> jen tento týden
+            <span class="chip once booked"></span> jen tento týden, student přihlášen
+            <span class="chip off"></span> výjimka (neučím)
+            <span class="chip"></span> neučím
+            <span class="chip orphan"></span> student přihlášen, ale termín už není v rozvrhu
+          </p>
         </div>
-        <p id="mode-hint" class="hint"></p>
+      </section>
 
-        <div class="grid-wrap"><div id="grid" class="grid"></div></div>
+      <AdminSaveBar />
+    </main>
+  </div>
 
-        <p class="legend">
-          <span class="chip on"></span> pravidelně, nikdo přihlášen &nbsp;
-          <span class="chip on booked"></span> pravidelně, student přihlášen &nbsp;
-          <span class="chip once"></span> jen tento týden &nbsp;
-          <span class="chip once booked"></span> jen tento týden, student přihlášen &nbsp;
-          <span class="chip off"></span> výjimka (neučím) &nbsp;
-          <span class="chip"></span> neučím &nbsp;
-          <span class="chip orphan"></span> student přihlášen, ale termín už není v rozvrhu
-        </p>
-      </div>
-    </section>
-
-    <section id="exceptions" class="panel" hidden>
-      <h2 class="panel-title">Výjimky: <span id="exceptions-title"></span></h2>
-      <div class="panel-body">
-        <form id="exceptions-form" class="row">
-          <label class="field">
-            <span>Týdny bez výuky (čísla týdnů oddělená čárkou, lze i rozsah, např. <code>25, 26, 30-32</code>)</span>
-            <input id="exceptions-input" autocomplete="off" size="40">
-          </label>
+  <dialog id="exceptions" class="modal" aria-labelledby="exceptions-heading">
+    <div class="modal-box">
+      <h2 id="exceptions-heading">Výjimky: <span id="exceptions-title"></span></h2>
+      <form id="exceptions-form" class="form-stack">
+        <label class="field">
+          <span>Týdny bez výuky (čísla týdnů oddělená čárkou, lze i rozsah, např. 25, 26, 30-32)</span>
+          <input id="exceptions-input" autocomplete="off">
+        </label>
+        <div id="exceptions-error" role="alert" class="flash"></div>
+        <div class="row">
           <button type="submit" class="btn btn-primary">Použít výjimky</button>
           <button type="button" id="exceptions-close" class="btn">Zavřít</button>
-        </form>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2 class="panel-title">Odučené lekce</h2>
-      <div class="panel-body">
-        <p id="past-hint" class="hint"></p>
-        <div class="table-wrap">
-          <table id="past-table" class="table" hidden>
-            <thead><tr><th>Datum</th><th>Čas</th><th>Student</th><th>Docházka</th><th>Platba</th></tr></thead>
-            <tbody id="past-rows"></tbody>
-          </table>
         </div>
-      </div>
-    </section>
-  </main>
+      </form>
+    </div>
+  </dialog>
 
-  <AppFooter />
   <script src="/js/top-scroll.js"></script>
+  <script src="shared.js"></script>
   <script src="schedule.js"></script>
 </body>
 </html>

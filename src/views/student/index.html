@@ -1,36 +1,50 @@
 <!doctype html>
 <html lang="cs">
 <head>
-  <Head title="Rezervace lekcí" />
-  <link rel="stylesheet" href="student.css">
+  <Head title="Můj přehled" />
+  <link rel="stylesheet" href="/css/admin-app.css">
+  <link rel="stylesheet" href="overview.css">
 </head>
-<body>
-  <StudentNavbar active="bookings" />
+<body class="app">
+  <StudentTopbar />
+  <div class="app-body">
+    <StudentSidebar active="overview" />
 
-  <main class="container page">
-    <header class="page-head">
-      <h1>Rezervace lekcí</h1>
-      <p class="lead">Přihlášen jako <strong id="who"></strong>. Kliknutím na políčko lektora si rezervujete lekci (50 minut od uvedené hodiny), kliknutím na svou rezervaci ji zrušíte.</p>
-    </header>
-    <div id="message" role="alert" class="flash"></div>
+    <main class="app-main">
+      <header class="app-head">
+        <h1>Můj přehled</h1>
+      </header>
 
-    <section class="panel">
-      <h2 class="panel-title">Legenda</h2>
-      <div class="panel-body"><p id="legend" class="legend"></p></div>
-    </section>
+      <section class="stats" aria-label="Údaje o studentovi">
+        <div class="stat"><span class="stat-label">Jméno</span><strong id="s-name">…</strong></div>
+        <div class="stat"><span class="stat-label">Číslo studenta</span><strong id="s-number">…</strong></div>
+        <div class="stat stat-credits"><span class="stat-label">Kredity</span><strong id="s-credits">…</strong><small>1 kredit = 1 lekce</small></div>
+      </section>
 
-    <section class="panel">
-      <h2 class="panel-title">Volné termíny</h2>
-      <div class="panel-body">
-        <div class="grid-wrap"><div id="grid" class="grid"></div></div>
-        <p id="empty" hidden>Zatím nejsou vypsané žádné termíny.</p>
-      </div>
-    </section>
-  </main>
+      <section class="card">
+        <div class="card-head"><h2>Postup v kurzu</h2></div>
+        <div class="card-body">
+          <div class="hero">
+            <div class="level-badge" id="badge">…</div>
+            <div class="hero-main">
+              <small id="level-no"></small>
+              <h3 id="level-title"></h3>
+              <div class="xpbar" id="bar" role="progressbar" aria-label="Postup v aktuálním levelu" aria-valuemin="0" aria-valuemax="100"><div id="bar-fill"></div></div>
+              <p id="bar-text" class="hint"></p>
+              <p id="hint" class="hint"></p>
+              <p><strong id="xp"></strong></p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-  <AppFooter />
+      <section class="card">
+        <div class="card-head"><h2>Přehled úrovní</h2></div>
+        <div class="card-body" id="levels"></div>
+      </section>
+    </main>
+  </div>
 
-  <script src="/js/top-scroll.js"></script>
-  <script src="student.js"></script>
+  <script src="overview.js"></script>
 </body>
 </html>

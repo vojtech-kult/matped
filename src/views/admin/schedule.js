@@ -1,25 +1,5 @@
 const $ = (id) => document.getElementById(id);
-
-// Kontrola, že HTML obsahuje všechny prvky, které skript používá
-const REQUIRED_IDS = [
-  'message', 'lecturer', 'year', 'week', 'prev-week', 'next-week', 'this-week', 'week-range',
-  'mode-hint', 'grid', 'exceptions', 'exceptions-title', 'exceptions-form', 'exceptions-input',
-  'exceptions-close', 'save', 'discard', 'dirty',
-  'upcoming-hint', 'upcoming-list', 'past-hint', 'past-table', 'past-rows',
-];
-const missingIds = REQUIRED_IDS.filter((id) => !document.getElementById(id));
-if (missingIds.length) {
-  const warning = document.createElement('p');
-  warning.style.cssText = 'color:crimson;font-weight:700';
-  warning.textContent = `V HTML chybí prvky s těmito id: ${missingIds.join(', ')}. Stránka nemůže fungovat.`;
-  document.body.prepend(warning);
-  throw new Error(`Chybí prvky: ${missingIds.join(', ')}`);
-}
-
-const message = $('message');
-
-// Horní posuvná lišta kalendáře (top-scroll.js), zobrazí se jen když je potřeba
-if (typeof enableTopScroll === 'function') enableTopScroll(document.querySelector('.grid-wrap'));
+const { api, el, fmtDate, timeRange } = Admin;
 
 const DAY_NAMES = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
 const STATUS_TEXT = {
@@ -29,9 +9,25 @@ const STATUS_TEXT = {
   empty: 'neučím',
 };
 const MODE_HINTS = {
-  all: 'Klik přidá nebo odebere pravidelný termín pro všechny týdny v roce. Výjimky nastavíte tlačítkem ✎ v políčku. Změny se uloží až tlačítkem „Uložit změny“.',
-  week: 'Klik na prázdné políčko přidá termín jen pro tento týden. Klik na pravidelné políčko z něj pro tento týden udělá výjimku (dalším klikem ji zrušíte). Změny se uloží až tlačítkem „Uložit změny“.',
+  all: 'Klik přidá nebo odebere pravidelný termín pro všechny týdny v roce. Výjimky nastavíte tlačítkem ✎ v políčku.',
+  week: 'Klik na prázdné políčko přidá termín jen pro tento týden. Klik na pravidelné políčko z něj pro tento týden udělá výjimku (dalším klikem ji zrušíte).',
 };
+
+// Kontrola, že HTML obsahuje všechny prvky, které skript používá
+const REQUIRED_IDS = [
+  'upcoming-who', 'upcoming-table', 'upcoming-rows', 'upcoming-empty', 'cal-who', 'year', 'week',
+  'prev-week', 'next-week', 'this-week', 'week-range', 'mode-hint', 'grid', 'exceptions',
+  'exceptions-title', 'exceptions-form', 'exceptions-input', 'exceptions-error', 'exceptions-close',
+  'savebar', 'save', 'discard', 'dirty',
+];
+const missing = REQUIRED_IDS.filter((id) => !$(id));
+if (missing.length) {
+  Admin.toast(`Chybí prvky stránky: ${missing.join(', ')}`, true);
+  throw new Error(`Chybí prvky stránky: ${missing.join(', ')}`);
+}
+
+// Horní posuvná lišta kalendáře (top-scroll.js), zobrazí se jen když je potřeba
+if (typeof enableTopScroll === 'function') enableTopScroll(document.querySelector('.grid-wrap'));
 
 const state = {
   firstHour: 8,
@@ -40,66 +36,31 @@ const state = {
   year: 0,
   week: 0,
   mode: 'all',
-  slots: new Map(), // pracovní kopie rozvrhu, klíč "den-hodina-týden|all"
-  saved: new Map(), // stav rozvrhu uložený na serveru (pro porovnání se změnami)
+  slots: new Map(),   // pracovní kopie rozvrhu, klíč "den-hodina-týden|all"
+  saved: new Map(),   // stav uložený na serveru (pro porovnání se změnami)
   lessons: new Map(), // klíč "den-hodina" -> čísla přihlášených studentů v zobrazeném týdnu
-  upcoming: null, // nejbližší lekce vybraného lektora
-  past: null, // odučené lekce vybraného lektora
-  selected: null, // políčko, jehož výjimky se upravují
+  upcoming: null,     // nejbližší lekce vybraného lektora
+  selected: null,     // políčko, jehož výjimky se upravují
   busy: false,
 };
 
 const key = (day, hour, week) => `${day}-${hour}-${week ?? 'all'}`;
 
-/* ---------- komunikace se serverem ---------- */
-
-async function api(method, url, body) {
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: method === 'GET' ? undefined : JSON.stringify(body ?? {}),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (res.status === 401 || res.status === 403) {
-    window.location.href = '/admin-login.html';
-    throw new Error('Nepřihlášen');
-  }
-  if (!res.ok) throw new Error(data.error ?? 'Chyba');
-  return data;
-}
-
-function show(text, isError = false) {
-  message.textContent = text;
-  message.style.color = isError ? 'crimson' : 'green';
-}
-
 // Všechny akce běží přes run(): zamezí souběžným klikům a vždy překreslí stránku
 async function run(fn) {
   if (state.busy) return;
   state.busy = true;
-  show('');
   try {
     await fn();
   } catch (err) {
-    show(err.message, true);
+    Admin.toast(err.message, true);
   } finally {
     state.busy = false;
     render();
   }
 }
 
-/* ---------- načítání dat ---------- */
-
-const cloneSlot = (r) => ({ day: r.day, hour: r.hour, week: r.week, excludedWeeks: [...r.excludedWeeks] });
-const sameWeeks = (a, b) => a.length === b.length && a.every((w, i) => w === b[i]);
-
-async function loadSlots(lecturer, year) {
-  const query = new URLSearchParams({ lecturer, year: String(year) });
-  const rows = await api('GET', `/api/admin/availability?${query}`);
-  state.slots = new Map(rows.map((r) => [key(r.day, r.hour, r.week), cloneSlot(r)]));
-  state.saved = new Map(rows.map((r) => [key(r.day, r.hour, r.week), cloneSlot(r)]));
-  state.selected = null;
-}
+/* ---------- načítání ---------- */
 
 async function loadLessons(lecturer, year, week) {
   const query = new URLSearchParams({ lecturer, year: String(year), week: String(week) });
@@ -112,27 +73,21 @@ async function loadUpcoming(lecturer) {
   state.upcoming = await api('GET', `/api/admin/availability/upcoming?${query}`);
 }
 
-async function loadPast(lecturer) {
-  const query = new URLSearchParams({ lecturer });
-  state.past = await api('GET', `/api/admin/availability/past?${query}`);
+const cloneSlot = (r) => ({ day: r.day, hour: r.hour, week: r.week, excludedWeeks: [...r.excludedWeeks] });
+const sameWeeks = (a, b) => a.length === b.length && a.every((w, i) => w === b[i]);
+
+async function loadSlots(lecturer, year) {
+  const query = new URLSearchParams({ lecturer, year: String(year) });
+  const rows = await api('GET', `/api/admin/availability?${query}`);
+  state.slots = new Map(rows.map((r) => [key(r.day, r.hour, r.week), cloneSlot(r)]));
+  state.saved = new Map(rows.map((r) => [key(r.day, r.hour, r.week), cloneSlot(r)]));
+  state.selected = null;
 }
 
-// Obnoví všechny přehledy rezervací vybraného lektora
-async function loadOverviews(lecturer, year, week) {
-  await Promise.all([loadLessons(lecturer, year, week), loadUpcoming(lecturer), loadPast(lecturer)]);
-}
-
-const studentsAt = (day, hour) => state.lessons.get(`${day}-${hour}`) ?? [];
-
-/* ---------- úpravy v paměti (na server jdou až po „Uložit změny“) ---------- */
-
-function putSlot(day, hour, week, excludedWeeks) {
+// Úpravy jen v paměti, na server jdou až po „Uložit změny“
+const putSlot = (day, hour, week, excludedWeeks) =>
   state.slots.set(key(day, hour, week), { day, hour, week, excludedWeeks: [...excludedWeeks] });
-}
-
-function deleteSlot(day, hour, week) {
-  state.slots.delete(key(day, hour, week));
-}
+const deleteSlot = (day, hour, week) => state.slots.delete(key(day, hour, week));
 
 function slotDiffers(k) {
   const a = state.slots.get(k);
@@ -154,6 +109,8 @@ function changeCount() {
   const { put, del } = diffSlots();
   return put.length + del.length;
 }
+
+const studentsAt = (day, hour) => state.lessons.get(`${day}-${hour}`) ?? [];
 
 /* ---------- ISO týdny ---------- */
 
@@ -271,6 +228,7 @@ function openExceptions(day, hour) {
   if (!rec) return;
   state.selected = { day, hour };
   $('exceptions-input').value = rec.excludedWeeks.join(', ');
+  $('exceptions-error').textContent = '';
 }
 
 // "25, 26, 30-32" -> [25, 26, 30, 31, 32]
@@ -287,130 +245,18 @@ function parseWeeks(text, max) {
   return [...weeks].sort((a, b) => a - b);
 }
 
-/* ---------- vykreslení: přehledy lekcí ---------- */
-
-function fmtLessonDate(s, weekday = 'long') {
-  const [y, m, d] = s.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('cs-CZ', {
-    weekday, day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC',
-  });
-}
-
-const studentLink = (s) => {
-  const link = document.createElement('a');
-  link.href = `/admin/students.html?number=${encodeURIComponent(s.studentNumber)}`;
-  link.textContent = `${s.studentNumber} – ${s.name || 'bez jména'}`;
-  return link;
-};
-
-function renderUpcoming() {
-  const list = $('upcoming-list');
-  const data = state.upcoming;
-  if (!data) {
-    list.replaceChildren();
-    return;
-  }
-
-  $('upcoming-hint').textContent = data.lessons.length
-    ? `Lektor ${state.lecturer}: nejbližší lekce s přihlášenými studenty (nejvýše 15).`
-    : `Lektor ${state.lecturer} zatím nemá žádnou naplánovanou lekci s přihlášeným studentem.`;
-
-  list.replaceChildren(
-    ...data.lessons.map((lesson) => {
-      const li = document.createElement('li');
-      li.className = 'upcoming-item';
-
-      const head = document.createElement('div');
-      head.className = 'upcoming-head';
-
-      const when = document.createElement('span');
-      when.className = 'upcoming-when';
-      when.textContent = `${fmtLessonDate(lesson.date)}, ${lesson.hour}:00–${lesson.hour}:50`;
-      head.append(when);
-
-      if (lesson.date === data.today) {
-        const badge = document.createElement('span');
-        badge.className = 'upcoming-today';
-        badge.textContent = 'Dnes';
-        head.append(badge);
-      }
-
-      const count = document.createElement('span');
-      count.className = 'upcoming-count';
-      count.textContent = `Obsazeno ${lesson.students.length}/${data.capacity}`;
-      head.append(count);
-
-      const students = document.createElement('ul');
-      students.className = 'upcoming-students';
-      for (const s of lesson.students) {
-        const item = document.createElement('li');
-        item.append(studentLink(s), ` · ${s.paid ? 'zaplaceno' : 'nezaplaceno'}`);
-        students.append(item);
-      }
-
-      li.append(head, students);
-      return li;
-    })
-  );
-}
-
-function textCell(text, className) {
-  const td = document.createElement('td');
-  td.textContent = text;
-  if (className) td.className = className;
-  return td;
-}
-
-function renderPast() {
-  const data = state.past;
-  const body = $('past-rows');
-  if (!data) {
-    body.replaceChildren();
-    $('past-table').hidden = true;
-    return;
-  }
-
-  const total = data.lessons.length;
-  $('past-hint').textContent = total
-    ? `Lektor ${state.lecturer}: odučené lekce, nejnovější nahoře` +
-      (total >= data.limit ? ` (zobrazeno posledních ${data.limit}).` : '.') +
-      ' Docházku a platby upravíte v Přehledu studentů.'
-    : `Lektor ${state.lecturer} zatím nemá žádnou odučenou lekci s přihlášeným studentem.`;
-  $('past-table').hidden = total === 0;
-
-  const rows = [];
-  for (const lesson of data.lessons) {
-    for (const s of lesson.students) {
-      const tr = document.createElement('tr');
-      const studentCell = document.createElement('td');
-      studentCell.append(studentLink(s));
-
-      tr.append(
-        textCell(fmtLessonDate(lesson.date, 'short')),
-        textCell(`${lesson.hour}:00–${lesson.hour}:50`),
-        studentCell,
-        textCell(s.attended === true ? 'Přišel' : s.attended === false ? 'Nepřišel' : '—'),
-        textCell(s.paid ? 'Zaplaceno' : 'Nezaplaceno', s.paid ? 'paid-yes' : 'paid-no')
-      );
-      rows.push(tr);
-    }
-  }
-  body.replaceChildren(...rows);
-}
-
-/* ---------- vykreslení: kalendář ---------- */
+/* ---------- vykreslení ---------- */
 
 function makeCell(day, hour) {
   const status = cellState(day, hour);
   const rec = state.slots.get(key(day, hour, null));
   const students = studentsAt(day, hour);
-  const label = `${DAY_NAMES[day - 1]} ${hour}:00–${hour}:50`;
+  const label = `${DAY_NAMES[day - 1]} ${timeRange(hour)}`;
 
   let text = `${label}: ${STATUS_TEXT[status]}`;
   if (students.length) text += `. Přihlášení studenti (${students.length}): ${students.join(', ')}`;
 
-  const wrap = document.createElement('div');
-  wrap.className = `cell ${status}`;
+  const wrap = el('div', `cell ${status}`);
   if (students.length) {
     wrap.classList.add('booked');
     // student je přihlášen, ale termín už v tomto týdnu v rozvrhu není
@@ -419,95 +265,115 @@ function makeCell(day, hour) {
   if (state.selected?.day === day && state.selected?.hour === hour) wrap.classList.add('selected');
   if (slotDiffers(key(day, hour, null)) || slotDiffers(key(day, hour, state.week))) wrap.classList.add('changed');
 
-  const toggle = document.createElement('button');
+  const toggle = el('button', 'toggle');
   toggle.type = 'button';
-  toggle.className = 'toggle';
   toggle.dataset.action = 'toggle';
   toggle.dataset.day = day;
   toggle.dataset.hour = hour;
   toggle.title = text;
   toggle.setAttribute('aria-label', text);
   toggle.setAttribute('aria-pressed', String(status === 'on' || status === 'once'));
-  for (const number of students) {
-    const line = document.createElement('span');
-    line.className = 'student-no';
-    line.textContent = number;
-    toggle.append(line);
-  }
+  for (const number of students) toggle.append(el('span', 'student-no', number));
   wrap.append(toggle);
 
   if (rec) {
-    const edit = document.createElement('button');
+    const edit = el('button', 'edit', rec.excludedWeeks.length ? `✎ ${rec.excludedWeeks.length}` : '✎');
     edit.type = 'button';
-    edit.className = 'edit';
     edit.dataset.action = 'edit';
     edit.dataset.day = day;
     edit.dataset.hour = hour;
-    const count = rec.excludedWeeks.length;
-    edit.textContent = count ? `✎ ${count}` : '✎';
-    edit.title = `Výjimky (týdny bez výuky): ${count ? rec.excludedWeeks.join(', ') : 'žádné'}`;
+    edit.title = `Výjimky (týdny bez výuky): ${rec.excludedWeeks.length ? rec.excludedWeeks.join(', ') : 'žádné'}`;
     edit.setAttribute('aria-label', `Upravit výjimky: ${label}`);
     wrap.append(edit);
   }
   return wrap;
 }
 
-function render() {
-  if (!state.year) return;
+function renderUpcoming() {
+  const data = state.upcoming;
+  const lessons = data?.lessons ?? [];
+  $('upcoming-who').textContent = state.lecturer ? `· ${state.lecturer}` : '';
+  $('upcoming-table').hidden = lessons.length === 0;
+  $('upcoming-empty').hidden = !data || lessons.length > 0;
 
-  $('lecturer').value = state.lecturer;
+  $('upcoming-rows').replaceChildren(
+    ...lessons.map((lesson) => {
+      const tr = el('tr');
+
+      const date = el('td', '', fmtDate(lesson.date));
+      if (lesson.date === data.today) date.append(el('span', 'badge', 'Dnes'));
+
+      const pills = el('div', 'pills');
+      for (const s of lesson.students) {
+        const pill = el('span', 'pill', s.name);
+        pill.append(' ', el('small', '', `#${s.studentNumber}`));
+        pills.append(pill);
+      }
+
+      const detail = el('a', 'btn btn-sm', 'Detail');
+      const query = new URLSearchParams({ lecturer: state.lecturer, date: lesson.date, hour: String(lesson.hour) });
+      detail.href = `/admin/lessons.html?${query}`;
+      detail.setAttribute('aria-label', `Detail lekce ${fmtDate(lesson.date)} ${timeRange(lesson.hour)}`);
+      const hover = el('span', 'row-actions');
+      hover.append(detail);
+      const actions = el('td', 'actions');
+      actions.append(hover);
+
+      const studentsCell = el('td');
+      studentsCell.append(pills);
+      tr.append(date, el('td', '', timeRange(lesson.hour)), studentsCell, actions);
+      return tr;
+    })
+  );
+}
+
+function renderCalendar() {
+  $('cal-who').textContent = state.lecturer ? `· ${state.lecturer}` : '';
   $('year').value = state.year;
   $('week').value = state.week;
   $('week').max = isoWeeksInYear(state.year);
   $('mode-hint').textContent = MODE_HINTS[state.mode];
+  for (const b of document.querySelectorAll('[data-mode]')) {
+    b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode));
+  }
 
   const monday = weekMonday(state.year, state.week);
   const sunday = new Date(monday);
   sunday.setUTCDate(monday.getUTCDate() + 6);
   $('week-range').textContent = `${fmt(monday)} – ${fmt(sunday, true)}`;
 
-  const items = [document.createElement('div')];
-  for (let hour = state.firstHour; hour <= state.lastHour; hour++) {
-    const head = document.createElement('div');
-    head.className = 'head';
-    head.textContent = `${hour}:00`;
-    items.push(head);
-  }
+  const items = [el('div')];
+  for (let hour = state.firstHour; hour <= state.lastHour; hour++) items.push(el('div', 'head', `${hour}:00`));
   for (let day = 1; day <= 7; day++) {
     const date = new Date(monday);
     date.setUTCDate(monday.getUTCDate() + day - 1);
-
-    const label = document.createElement('div');
-    label.className = 'day';
-    label.textContent = DAY_NAMES[day - 1];
-    const small = document.createElement('small');
-    small.textContent = fmt(date);
-    label.append(small);
+    const label = el('div', 'day', DAY_NAMES[day - 1]);
+    label.append(el('small', '', fmt(date)));
     items.push(label);
-
-    for (let hour = state.firstHour; hour <= state.lastHour; hour++) {
-      items.push(makeCell(day, hour));
-    }
+    for (let hour = state.firstHour; hour <= state.lastHour; hour++) items.push(makeCell(day, hour));
   }
   $('grid').replaceChildren(...items);
+}
 
-  // panel s výjimkami zobrazíme jen pro existující pravidelné políčko
-  if (state.selected && !state.slots.has(key(state.selected.day, state.selected.hour, null))) {
-    state.selected = null;
-  }
-  $('exceptions').hidden = !state.selected;
+function render() {
+  if (!state.year) return;
+  renderUpcoming();
+  renderCalendar();
+
+  // okno s výjimkami je otevřené jen pro existující pravidelné políčko
+  if (state.selected && !state.slots.has(key(state.selected.day, state.selected.hour, null))) state.selected = null;
+  const dialog = $('exceptions');
   if (state.selected) {
     const { day, hour } = state.selected;
-    $('exceptions-title').textContent = `${DAY_NAMES[day - 1]} ${hour}:00–${hour}:50`;
+    $('exceptions-title').textContent = `${DAY_NAMES[day - 1]} ${timeRange(hour)}`;
+    if (!dialog.open) dialog.showModal();
+  } else if (dialog.open) {
+    dialog.close();
   }
 
   const count = changeCount();
-  $('save').disabled = count === 0;
-  $('discard').disabled = count === 0;
+  $('savebar').hidden = count === 0;
   $('dirty').textContent = count ? `Neuložené změny: ${count}` : '';
-
-  renderUpcoming();
-  renderPast();
 }
 
 /* ---------- události ---------- */
@@ -527,35 +393,35 @@ $('exceptions-form').addEventListener('submit', (e) => {
   e.preventDefault();
   if (!state.selected) return;
   const { day, hour } = state.selected;
-  run(async () => {
+  try {
     const weeks = parseWeeks($('exceptions-input').value, isoWeeksInYear(state.year));
-    putSlot(day, hour, null, weeks);
-    $('exceptions-input').value = weeks.join(', ');
-    show(
-      weeks.length
-        ? `Výjimky nastaveny: ${weeks.join(', ')} (zatím neuloženo)`
-        : 'Výjimky odstraněny (zatím neuloženo).'
-    );
-  });
+    run(async () => {
+      putSlot(day, hour, null, weeks);
+      state.selected = null;
+      Admin.toast(weeks.length ? `Výjimky nastaveny: ${weeks.join(', ')} (zatím neuloženo)` : 'Výjimky odstraněny (zatím neuloženo).');
+    });
+  } catch (err) {
+    $('exceptions-error').textContent = err.message;
+  }
 });
 
-$('exceptions-close').addEventListener('click', () => {
+$('exceptions-close').addEventListener('click', () => $('exceptions').close());
+// zavření okna (tlačítko, Esc) zruší výběr políčka
+$('exceptions').addEventListener('close', () => {
   state.selected = null;
   render();
 });
+// klik na pozadí okna
+$('exceptions').addEventListener('click', (e) => {
+  if (e.target === $('exceptions')) $('exceptions').close();
+});
 
-$('lecturer').addEventListener('change', () =>
-  run(async () => {
-    if (changeCount() && !confirm('Máte neuložené změny rozvrhu. Přepnutím lektora se zahodí. Pokračovat?')) {
-      $('lecturer').value = state.lecturer;
-      return;
-    }
-    const lecturer = $('lecturer').value;
-    await loadSlots(lecturer, state.year);
-    await loadOverviews(lecturer, state.year, state.week);
-    state.lecturer = lecturer;
-  })
-);
+for (const b of document.querySelectorAll('[data-mode]')) {
+  b.addEventListener('click', () => {
+    state.mode = b.dataset.mode;
+    render();
+  });
+}
 
 $('save').addEventListener('click', () =>
   run(async () => {
@@ -565,7 +431,7 @@ $('save').addEventListener('click', () =>
       lecturer: state.lecturer, year: state.year, put, delete: del,
     });
     await loadSlots(state.lecturer, state.year);
-    show('Rozvrh uložen.');
+    Admin.toast('Rozvrh uložen.');
   })
 );
 
@@ -573,7 +439,7 @@ $('discard').addEventListener('click', () =>
   run(async () => {
     if (!confirm('Zahodit všechny neuložené změny rozvrhu?')) return;
     await loadSlots(state.lecturer, state.year);
-    show('Změny zahozeny.');
+    Admin.toast('Změny zahozeny.');
   })
 );
 
@@ -584,39 +450,38 @@ window.addEventListener('beforeunload', (e) => {
   }
 });
 
-// Po návratu na záložku obnovíme rezervace studentů (mezitím se mohl někdo přihlásit)
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && state.year) {
-    run(() => loadOverviews(state.lecturer, state.year, state.week));
-  }
-});
-
 $('year').addEventListener('change', () => run(() => goTo(Number($('year').value), state.week)));
 $('week').addEventListener('change', () => run(() => goTo(state.year, Number($('week').value))));
 $('prev-week').addEventListener('click', () => run(() => { const s = shifted(-1); return goTo(s.year, s.week); }));
 $('next-week').addEventListener('click', () => run(() => { const s = shifted(1); return goTo(s.year, s.week); }));
 $('this-week').addEventListener('click', () => run(() => { const n = currentIsoWeek(); return goTo(n.year, n.week); }));
 
-document.querySelectorAll('input[name="mode"]').forEach((radio) =>
-  radio.addEventListener('change', () => {
-    if (!radio.checked) return;
-    state.mode = radio.value;
-    render();
+// Lektor z horní lišty: neuložené změny je potřeba potvrdit, pak se načte jeho rozvrh
+Admin.beforeLecturerChange = () =>
+  !changeCount() || confirm('Máte neuložené změny rozvrhu. Přepnutím lektora se zahodí. Pokračovat?');
+
+Admin.onLecturerChange((lecturer) =>
+  run(async () => {
+    await Promise.all([loadSlots(lecturer, state.year), loadLessons(lecturer, state.year, state.week), loadUpcoming(lecturer)]);
+    state.lecturer = lecturer;
   })
 );
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state.year) {
+    run(() => Promise.all([loadLessons(state.lecturer, state.year, state.week), loadUpcoming(state.lecturer)]));
+  }
+});
 
 /* ---------- start ---------- */
 
 run(async () => {
-  const cfg = await api('GET', '/api/admin/availability/config');
+  const cfg = await Admin.ready;
   state.firstHour = cfg.firstHour;
   state.lastHour = cfg.lastHour;
-  $('lecturer').replaceChildren(...cfg.lecturers.map((name) => new Option(name, name)));
-
-  const lecturer = cfg.lecturers[0];
+  const lecturer = Admin.lecturer;
   const now = currentIsoWeek();
-  await loadSlots(lecturer, now.year);
-  await loadOverviews(lecturer, now.year, now.week);
+  await Promise.all([loadSlots(lecturer, now.year), loadLessons(lecturer, now.year, now.week), loadUpcoming(lecturer)]);
   state.lecturer = lecturer;
   state.year = now.year;
   state.week = now.week;

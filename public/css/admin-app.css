@@ -1,0 +1,174 @@
+/* =========================================================
+   MatPed – administrace (wireframe, vzhled aplikace)
+   Načítá se až po wireframe.css, používá jeho proměnné z :root.
+   Vše je v rozsahu body.app, takže staré stránky to neovlivní.
+   ========================================================= */
+:root {
+  --topbar-h: 3.5rem;
+  --sidebar-w: 14.5rem;
+  --ap-radius: 12px;
+  --ap-shadow: 0 1px 2px rgba(17, 24, 39, .05), 0 6px 20px rgba(17, 24, 39, .04);
+}
+body.app { min-height: 100vh; display: flex; flex-direction: column; background: var(--wf-bg, #f4f4f5); color: var(--wf-text, #111827); }
+.app [hidden] { display: none !important; }
+
+/* ---------- formulářové prvky ---------- */
+.app .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  padding: .5rem 1rem; font: inherit; font-weight: 600; line-height: 1.2; text-decoration: none; cursor: pointer;
+  color: var(--wf-text, #111827); background: #fff; border: 1px solid var(--wf-box-dark, #c4c4c8); border-radius: 8px;
+}
+.app .btn:hover { border-color: var(--wf-dark, #222); }
+.app .btn:disabled { opacity: .45; cursor: not-allowed; }
+.app .btn-primary { color: #fff; background: var(--wf-dark, #222); border-color: var(--wf-dark, #222); }
+.app .btn-sm { padding: .3rem .75rem; font-size: .85rem; }
+.app input:not([type="checkbox"]):not([type="radio"]), .app select, .app textarea {
+  padding: .5rem .7rem; font: inherit; color: inherit; background: #fff;
+  border: 1px solid var(--wf-box-dark, #c4c4c8); border-radius: 8px;
+}
+.app :is(input, select, textarea, .btn, .seg button, .toggle, .edit, a):focus-visible { outline: 2px solid var(--wf-dark, #222); outline-offset: 2px; }
+.app .field { display: flex; flex-direction: column; gap: .25rem; }
+.app .field > span { font-size: .8rem; font-weight: 600; color: var(--wf-muted, #6b7280); }
+.app .hint, .app .lead { color: var(--wf-muted, #6b7280); }
+.app .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+
+/* ---------- horní lišta ---------- */
+.app-topbar {
+  position: sticky; top: 0; z-index: 30; height: var(--topbar-h); flex: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0 1.25rem; background: #fff; border-bottom: 1px solid var(--wf-box, #e5e7eb);
+}
+.app-logo { display: inline-flex; text-decoration: none; }
+.app-topbar .wf-logo { display: flex; align-items: center; justify-content: center; width: 7rem; height: 2.25rem; }
+.app-topbar-actions { display: flex; align-items: center; gap: .75rem; }
+.select-lecturer { min-width: 9rem; font-weight: 600; }
+
+/* ---------- rozložení: sidebar vlevo, obsah vpravo ---------- */
+.app-body { flex: 1; display: flex; align-items: flex-start; }
+.app-sidebar {
+  position: sticky; top: var(--topbar-h); flex: none; width: var(--sidebar-w);
+  height: calc(100vh - var(--topbar-h)); padding: 1.25rem .75rem; overflow-y: auto;
+  background: #fff; border-right: 1px solid var(--wf-box, #e5e7eb);
+}
+.app-sidebar nav { display: flex; flex-direction: column; gap: .25rem; }
+.app-sidebar a {
+  display: flex; align-items: center; gap: .75rem; padding: .6rem .75rem; border-radius: 8px;
+  color: var(--wf-muted, #6b7280); font-weight: 600; text-decoration: none;
+}
+.app-sidebar a:hover { background: var(--wf-bg, #f4f4f5); color: var(--wf-text, #111827); }
+.app-sidebar a[aria-current="page"] { background: var(--wf-dark, #222); color: #fff; }
+.nav-ico { flex: none; width: 1.1rem; height: 1.1rem; border: 1.5px dashed currentColor; border-radius: 4px; opacity: .7; }
+.app-main { flex: 1; min-width: 0; max-width: 84rem; padding: 2rem clamp(1rem, 3vw, 2.5rem) 6rem; }
+
+@media (max-width: 56rem) {
+  .app-body { flex-direction: column; align-items: stretch; }
+  .app-sidebar { position: static; width: auto; height: auto; padding: .5rem; border-right: 0; border-bottom: 1px solid var(--wf-box, #e5e7eb); }
+  .app-sidebar nav { flex-direction: row; overflow-x: auto; }
+  .app-sidebar a { white-space: nowrap; }
+  .app-topbar .wf-logo { width: 4.5rem; }
+}
+
+/* ---------- hlavička stránky, karty ---------- */
+.app-head { margin-bottom: 1.5rem; }
+.app-head h1 { margin: 0 0 .25rem; font-size: 1.75rem; }
+.app-head .lead { margin: 0; }
+
+.card { margin-bottom: 1.5rem; background: #fff; border: 1px solid var(--wf-box, #e5e7eb); border-radius: var(--ap-radius); box-shadow: var(--ap-shadow); }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--wf-box, #e5e7eb); }
+.card-head h2 { margin: 0; font-size: 1.05rem; }
+.card-head h2 .hint { margin-left: .4rem; font-size: .9rem; font-weight: 400; }
+.card-body { padding: 1.25rem; }
+.empty-note { margin: 0; padding: 2rem 1.25rem; text-align: center; color: var(--wf-muted, #6b7280); }
+
+/* ---------- segmentová tlačítka ---------- */
+.seg { display: inline-flex; flex-wrap: wrap; gap: .25rem; padding: .25rem; background: var(--wf-bg-alt, #ececee); border-radius: 10px; }
+.seg button { padding: .4rem .9rem; font: inherit; font-weight: 600; color: var(--wf-muted, #6b7280); background: transparent; border: 0; border-radius: 8px; cursor: pointer; }
+.seg button:hover { color: var(--wf-text, #111827); }
+.seg button[aria-pressed="true"], .seg button[aria-selected="true"] { color: var(--wf-text, #111827); background: #fff; box-shadow: 0 1px 3px rgba(17, 24, 39, .18); }
+
+/* ---------- tabulky s akcemi při najetí ---------- */
+.tbl-wrap { overflow-x: auto; }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { padding: .65rem 1.25rem; text-align: left; white-space: nowrap; font-size: .75rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--wf-muted, #6b7280); border-bottom: 1px solid var(--wf-box, #e5e7eb); }
+.tbl td { padding: .75rem 1.25rem; vertical-align: middle; border-bottom: 1px solid var(--wf-bg-alt, #ececee); }
+.tbl tbody tr:last-child td { border-bottom: 0; }
+.tbl tbody tr:hover { background: var(--wf-bg, #f4f4f5); }
+.tbl .actions { width: 1%; text-align: right; white-space: nowrap; }
+.row-actions { display: inline-flex; gap: .4rem; opacity: 0; transition: opacity .12s; }
+.tbl tr:hover .row-actions, .tbl tr:focus-within .row-actions { opacity: 1; }
+@media (hover: none) { .row-actions { opacity: 1; } }
+.pills { display: flex; flex-wrap: wrap; gap: .35rem; }
+.pill { display: inline-block; padding: .1rem .65rem; font-size: .85rem; background: var(--wf-bg-alt, #ececee); border-radius: 999px; }
+.pill small { color: var(--wf-muted, #6b7280); }
+.badge { margin-left: .5rem; padding: .05rem .5rem; font-size: .7rem; font-weight: 600; color: #fff; background: var(--wf-dark, #222); border-radius: 999px; vertical-align: middle; }
+
+/* ---------- plovoucí lišta „Uložit změny“ ---------- */
+.app .savebar {
+  position: fixed; bottom: 1.25rem; z-index: 40; display: flex; align-items: center; gap: .6rem;
+  left: calc(var(--sidebar-w) + (100% - var(--sidebar-w)) / 2); transform: translateX(-50%);
+  max-width: calc(100% - 2rem); max-height: 4rem; padding: .6rem .6rem .6rem 1.1rem;
+  color: #fff; background: var(--wf-dark, #222); border-radius: 12px; box-shadow: 0 8px 30px rgba(17, 24, 39, .35);
+}
+.app .savebar .dirty { margin-right: .5rem; font-weight: 600; }
+.app .savebar .btn-primary { color: var(--wf-text, #111827); background: #fff; border-color: #fff; }
+.app .savebar #discard { color: #fff; background: transparent; border-color: rgba(255, 255, 255, .5); }
+@media (max-width: 56rem) { .app .savebar { left: 50%; } }
+
+/* ---------- hlášení (toast) ---------- */
+.toast { position: fixed; right: 1.25rem; top: calc(var(--topbar-h) + 1rem); z-index: 100; max-width: 24rem; padding: .75rem 1rem; color: #fff; background: var(--wf-dark, #222); border-radius: 10px; box-shadow: 0 8px 30px rgba(17, 24, 39, .35); }
+.toast.error { background: var(--wf-err, #b91c1c); }
+
+/* ---------- modální okna ---------- */
+.app dialog.modal { width: min(32rem, calc(100% - 2rem)); padding: 0; border: 0; border-radius: 14px; box-shadow: 0 20px 60px rgba(17, 24, 39, .35); }
+.app dialog.modal::backdrop { background: rgba(17, 24, 39, .45); }
+.app .modal-box { padding: 1.5rem; }
+.app .modal-box h2 { margin: 0 0 1rem; font-size: 1.2rem; }
+.app .form-stack { display: flex; flex-direction: column; gap: 1rem; }
+.app .flash { min-height: 1.2em; color: var(--wf-err, #b91c1c); }
+
+/* ---------- detail studenta: postup v kurzu ---------- */
+details.level { margin: .5rem 0; padding: .6rem 1rem; background: #fff; border: 1px solid var(--wf-box, #e5e7eb); border-radius: 10px; }
+details.level.current { border: 2px solid var(--wf-dark, #222); }
+details.level.completed summary { color: var(--wf-ok, #15803d); }
+details.level summary { cursor: pointer; font-weight: 600; }
+.app progress { accent-color: var(--wf-dark, #222); vertical-align: middle; }
+.checks label { display: block; padding: .2rem .3rem; border-radius: 4px; }
+.checks label.changed, .tbl tr.changed td { background: #fef9c3; }
+.test-row { margin-top: .5rem; padding-top: .5rem; border-top: 1px dashed var(--wf-box-dark, #c4c4c8); }
+.card-sub { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--wf-bg-alt, #ececee); }
+
+/* ---------- filtry v tabulkách ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: flex-end; }
+
+/* ---------- příklady ---------- */
+.toolbar-sticky {
+  position: sticky; top: var(--topbar-h); z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem;
+  margin-bottom: 1.5rem; padding: .75rem 1rem; background: #fff; border: 1px solid var(--wf-box, #e5e7eb);
+  border-radius: var(--ap-radius); box-shadow: var(--ap-shadow);
+}
+.toolbar-sticky input { flex: 1; min-width: 12rem; }
+.toolbar-sticky .grow { flex: 1; min-width: 8rem; }
+.example-list { margin: 0; padding: 0; list-style: none; }
+.example { display: flex; gap: 1rem; align-items: flex-start; padding: .85rem 1.25rem; border-bottom: 1px solid var(--wf-bg-alt, #ececee); }
+.example:last-child { border-bottom: 0; }
+.example:hover, .example.selected { background: var(--wf-bg, #f4f4f5); }
+.example-main { flex: 1; min-width: 0; }
+.example-pick { display: flex; gap: .75rem; cursor: pointer; }
+.example-pick input { margin-top: .4rem; }
+.example-body { flex: 1; min-width: 0; }
+.example-preview { overflow-x: auto; white-space: pre-wrap; }
+.example-meta { font-size: .85rem; color: var(--wf-muted, #6b7280); }
+.example-error { font-size: .9rem; color: var(--wf-err, #b91c1c); }
+.example details { margin-top: .4rem; font-size: .85rem; }
+.example pre, .app details pre { overflow-x: auto; padding: .5rem; background: var(--wf-bg, #f4f4f5); border: 1px solid var(--wf-box, #e5e7eb); border-radius: 6px; }
+.example .row-actions { opacity: 0; }
+.example:hover .row-actions, .example:focus-within .row-actions { opacity: 1; }
+@media (hover: none) { .example .row-actions { opacity: 1; } }
+.code-input { width: 100%; font-family: ui-monospace, Consolas, monospace; }
+.result-links { display: flex; flex-wrap: wrap; gap: .5rem; }
+.card-body.filters { padding: 1rem 1.25rem; }
+
+/* ---------- přihlášený student v horní liště ---------- */
+.topbar-user { display: inline-flex; align-items: baseline; gap: .5rem; padding: .35rem .85rem; background: var(--wf-bg, #f4f4f5); border-radius: 999px; }
+.topbar-user span { font-size: .85rem; color: var(--wf-muted, #6b7280); }
+@media (max-width: 40rem) { .topbar-user span { display: none; } }

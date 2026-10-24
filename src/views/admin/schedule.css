@@ -1,60 +1,45 @@
-
-.controls { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end; margin-bottom: 1rem; }
+/* Rozvrh: týdenní kalendář lektora */
 .week-nav { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-end; }
-.week-nav input { width: 5rem; }
-.mode { border: 1px solid #ccc; }
+.week-nav .field input { width: 5rem; }
+#week-range { align-self: center; margin-left: .5rem; color: var(--wf-muted, #6b7280); }
+#mode-hint { margin: .75rem 0 0; }
 
-.grid-wrap { overflow-x: auto; }
-.grid {
-  display: grid;
-  grid-template-columns: 8rem repeat(13, minmax(3.4rem, 1fr));
-  gap: 3px;
-  min-width: 66rem;
-}
-.head { font-size: .8rem; text-align: center; color: #555; }
+.grid-wrap { margin-top: 1rem; overflow-x: auto; }
+.grid { display: grid; grid-template-columns: 7.5rem repeat(13, minmax(3.4rem, 1fr)); gap: 4px; min-width: 66rem; }
+.head { font-size: .75rem; text-align: center; color: var(--wf-muted, #6b7280); }
 .day { align-self: center; font-weight: 600; }
-.day small { display: block; font-weight: 400; color: #666; }
+.day small { display: block; font-weight: 400; color: var(--wf-muted, #6b7280); }
 
 .cell { position: relative; }
 .toggle {
-  width: 100%; min-height: 3.8rem; padding: 0 2px 3px;
-  border: 1px solid #bbb; border-radius: 4px;
-  background: #fff; cursor: pointer;
+  width: 100%; min-height: 3.8rem; padding: 0 2px 3px; cursor: pointer;
   display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-  color: #111; font-size: .65rem; font-weight: 600; line-height: 1.2;
+  font: inherit; font-size: .65rem; font-weight: 600; line-height: 1.2; color: #111827;
+  background: #fff; border: 1px solid #d4d4d8; border-radius: 8px;
 }
 .toggle:hover { border-color: #222; }
 .student-no { display: block; font-variant-numeric: tabular-nums; }
-.cell.on .toggle   { background: #fef08a; border-color: #eab308; }
-.cell.on.booked .toggle { background: #facc15; border-color: #a16207; }
 
+/* stavy políček (žlutá = pravidelně, oranžová = jen tento týden, sytější = přihlášený student) */
+.cell.on .toggle { background: #fef08a; border-color: #eab308; }
+.cell.on.booked .toggle { background: #facc15; border-color: #a16207; }
 .cell.once .toggle { background: #fed7aa; border-color: #fb923c; }
 .cell.once.booked .toggle { background: #f97316; border-color: #c2410c; }
-
-.cell.off .toggle  {
-  background: repeating-linear-gradient(45deg, #f3f3f3, #f3f3f3 4px, #aaa 4px, #aaa 6px);
-  border-color: #777;
-}
-
-/* Student je přihlášen na termín, který už není v rozvrhu */
+.cell.off .toggle { background: repeating-linear-gradient(45deg, #f3f3f3, #f3f3f3 4px, #aaa 4px, #aaa 6px); border-color: #777; }
 .cell.orphan .toggle { border: 3px solid #dc2626; }
-
 .cell.selected .toggle { outline: 3px solid #1d4ed8; }
+.cell.changed .toggle { box-shadow: 0 0 0 2px #b45309; }
+
 .edit {
-  position: absolute; top: 2px; right: 2px; padding: 0 3px;
-  font-size: .7rem; line-height: 1.2; cursor: pointer;
-  background: rgba(255, 255, 255, .85); border: 1px solid #888; border-radius: 3px;
+  position: absolute; top: 2px; right: 2px; padding: 0 4px; cursor: pointer;
+  font-size: .7rem; line-height: 1.3; background: rgba(255, 255, 255, .9); border: 1px solid #888; border-radius: 4px;
 }
 
-.legend { margin-top: 1rem; }
-.chip {
-  display: inline-block; min-width: 2rem; height: 1.4rem; line-height: 1.4rem;
-  text-align: center; border: 1px solid #bbb; border-radius: 3px; color: #fff; font-weight: 700;
-  vertical-align: middle;
-}
-.chip.on   { background: #fef08a; border-color: #eab308; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1.25rem; margin: 1.25rem 0 0; font-size: .85rem; color: var(--wf-muted, #6b7280); }
+.chip { display: inline-block; min-width: 2rem; height: 1.25rem; margin-right: .3rem; vertical-align: middle; border: 1px solid #bbb; border-radius: 4px; }
+.chip.on { background: #fef08a; border-color: #eab308; }
 .chip.on.booked { background: #facc15; border-color: #a16207; }
 .chip.once { background: #fed7aa; border-color: #fb923c; }
 .chip.once.booked { background: #f97316; border-color: #c2410c; }
-.chip.off  { background: repeating-linear-gradient(45deg, #f3f3f3, #f3f3f3 4px, #aaa 4px, #aaa 6px); }
+.chip.off { background: repeating-linear-gradient(45deg, #f3f3f3, #f3f3f3 4px, #aaa 4px, #aaa 6px); }
 .chip.orphan { background: #fff; border: 3px solid #dc2626; }

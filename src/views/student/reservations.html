@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <Head title="Rezervace lekcí" />
+  <link rel="stylesheet" href="/css/admin-app.css">
+  <link rel="stylesheet" href="reservations.css">
+</head>
+<body class="app">
+  <StudentTopbar />
+  <div class="app-body">
+    <StudentSidebar active="reservations" />
+
+    <main class="app-main">
+      <header class="app-head">
+        <h1>Rezervace lekcí</h1>
+        <p class="lead">Máš <strong id="credits">…</strong> kreditů. Rezervace jedné lekce stojí 1 kredit, zrušením se kredit vrací.</p>
+      </header>
+
+      <section class="card">
+        <div class="card-head"><h2>Nadcházející lekce</h2></div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="upcoming-table" hidden>
+            <thead><tr><th>Datum</th><th>Čas</th><th>Lektor</th><th class="actions"></th></tr></thead>
+            <tbody id="upcoming-rows"></tbody>
+          </table>
+        </div>
+        <p id="upcoming-empty" class="empty-note" hidden>Zatím nemáš žádnou rezervovanou lekci. Vyber si termín v kalendáři níže.</p>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Rezervační kalendář</h2>
+          <p id="legend" class="legend"></p>
+        </div>
+        <div class="card-body">
+          <p class="hint" style="margin-top:0">Kliknutím na políčko lektora si rezervuješ lekci (trvá 50 minut od uvedené hodiny). Kliknutím na svou rezervaci ji zrušíš.</p>
+          <div class="grid-wrap"><div id="grid" class="grid"></div></div>
+          <p id="empty" class="empty-note" hidden>Zatím nejsou vypsané žádné termíny.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/top-scroll.js"></script>
+  <script src="reservations.js"></script>
+</body>
+</html>

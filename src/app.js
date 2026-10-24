@@ -23,6 +23,23 @@ const app = express();
 // Za proxy hostingu (Railway/Render) jinak nefunguje secure cookie ani rate limit podle IP
 if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
 
+export const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGODB_URI,
+  stringify: false, // session jako objekt, aby šlo mazat podle userId
+  ttl: SESSION_TTL_SECONDS,
+});
+
+app.use(
+  session({
+    name: COOKIE_NAME,
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    cookie: { ...cookieOptions, maxAge: SESSION_TTL_SECONDS * 1000 },
+  })
+);
+
 app.use(helmet());
 app.use(express.json({ limit: '100kb' }));
 

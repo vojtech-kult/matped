@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <Head title="Lekce" />
+  <link rel="stylesheet" href="/css/admin-app.css">
+</head>
+<body class="app">
+  <AdminTopbar />
+  <div class="app-body">
+    <AdminSidebar active="lessons" />
+
+    <main class="app-main">
+      <section id="list-view">
+        <header class="app-head">
+          <h1>Lekce</h1>
+          <p class="lead">Všechny lekce lektorů. Po najetí na řádek otevřete detail lekce.</p>
+        </header>
+
+        <section class="card">
+          <div class="card-head">
+            <div class="seg" id="scope-tabs" role="group" aria-label="Druh lekcí">
+              <button type="button" data-scope="past" aria-pressed="true">Proběhlé lekce</button>
+              <button type="button" data-scope="upcoming" aria-pressed="false">Budoucí lekce</button>
+            </div>
+          </div>
+          <div class="card-sub">
+            <div class="filters">
+              <label class="field"><span>Lektor</span><select id="f-lecturer"></select></label>
+              <label class="field"><span>Od</span><input id="f-from" type="date"></label>
+              <label class="field"><span>Do</span><input id="f-to" type="date"></label>
+            </div>
+            <div class="seg" id="quick" role="group" aria-label="Rychlý výběr období">
+              <button type="button" data-range="this">Tento měsíc</button>
+              <button type="button" data-range="last">Minulý měsíc</button>
+              <button type="button" data-range="all">Vše</button>
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table class="tbl" id="lessons-table" hidden>
+              <thead><tr><th>Datum</th><th>Čas</th><th>Lektor</th><th>Studenti</th><th id="att-head">Docházka</th><th class="actions"></th></tr></thead>
+              <tbody id="lessons-rows"></tbody>
+            </table>
+          </div>
+          <p id="lessons-empty" class="empty-note" hidden>Žádné lekce pro zvolený filtr.</p>
+          <p id="lessons-trunc" class="hint" hidden style="padding:0 1.25rem 1rem">Zobrazeno je jen prvních 1000 lekcí, zúžte filtr.</p>
+        </section>
+      </section>
+
+      <section id="detail-view" hidden>
+        <p><button type="button" id="back" class="btn btn-sm">← Zpět na lekce</button></p>
+        <header class="app-head">
+          <h1 id="d-date"></h1>
+          <p class="lead" id="d-meta"></p>
+        </header>
+
+        <section class="card">
+          <div class="card-sub"><div class="seg" id="student-tabs" role="group" aria-label="Student"></div></div>
+          <div id="student-panel" class="card-body"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="lessons.js"></script>
+</body>
+</html>

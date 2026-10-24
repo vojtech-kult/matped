@@ -1,5 +1,4 @@
 const $ = (id) => document.getElementById(id);
-const message = $('message');
 
 const state = {
   config: null,
@@ -22,32 +21,21 @@ const MATH_OPTIONS = {
   throwOnError: false,
 };
 
-async function api(method, url, body) {
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: method === 'GET' ? undefined : JSON.stringify(body ?? {}),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (res.status === 401 || res.status === 403) {
-    window.location.href = '/admin-login.html';
-    throw new Error('Nepřihlášen');
-  }
-  if (!res.ok) throw new Error(data.error ?? 'Chyba');
-  return data;
+const { api, el } = Admin;
+
+const REQUIRED_IDS = [
+  'tabs', 'panel-pdf', 'panel-upload', 'sel-count', 'pdf-title', 'generate', 'clear-selection', 'status', 'results',
+  'result-links', 'label', 'sort', 'min', 'max', 'select-all', 'list-hint', 'list', 'create-form', 'new-label',
+  'new-difficulty', 'new-code', 'create-error',
+];
+const missing = REQUIRED_IDS.filter((id) => !$(id));
+if (missing.length) {
+  Admin.toast(`Chybí prvky stránky: ${missing.join(', ')}`, true);
+  throw new Error(`Chybí prvky stránky: ${missing.join(', ')}`);
 }
 
-function show(text, isError = false) {
-  message.textContent = text;
-  message.style.color = isError ? 'crimson' : 'green';
-}
-
-function el(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
+// Stav (zprávy o výsledku jdou jako hlášení vpravo nahoře)
+const show = (text, isError = false) => Admin.toast(text, isError);
 
 function renderMath(root) {
   if (typeof window.renderMathInElement === 'function') window.renderMathInElement(root, MATH_OPTIONS);
@@ -127,12 +115,14 @@ function rowElement(item) {
   const main = el('div', 'example-main');
   main.append(pick, details);
 
-  const del = el('button', 'btn btn-danger', 'Smazat');
+  const del = el('button', 'btn btn-sm', 'Smazat');
   del.type = 'button';
   del.dataset.action = 'delete';
   del.dataset.id = item.id;
+  const actions = el('span', 'row-actions');
+  actions.append(del);
 
-  li.append(main, del);
+  li.append(main, actions);
   return li;
 }
 
@@ -238,6 +228,7 @@ $('create-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (state.busy) return;
   state.busy = true;
+  $('create-error').textContent = '';
   try {
     await api('POST', '/api/admin/examples', {
       label: $('new-label').value,
@@ -248,7 +239,7 @@ $('create-form').addEventListener('submit', async (e) => {
     show('Příklad přidán.');
     await refresh();
   } catch (err) {
-    show(err.message, true);
+    $('create-error').textContent = err.message;
   } finally {
     state.busy = false;
     updateSelection();
@@ -260,6 +251,13 @@ function pdfUrl(base64) {
   return URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
 }
 
+// Název stahovaného souboru podle zadaného názvu (bez diakritiky), např. „Zlomky 7.A“ -> zlomky-7-a.pdf
+function downloadName(original) {
+  const slug = $('pdf-title').value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  return slug ? original.replace(/^zadani/, slug) : original;
+}
+
 function showResults(files) {
   for (const url of state.urls) URL.revokeObjectURL(url);
   state.urls = [];
@@ -269,7 +267,7 @@ function showResults(files) {
     state.urls.push(url);
     const a = el('a', 'btn btn-primary', `Stáhnout: ${file.label} (PDF)`);
     a.href = url;
-    a.download = file.name;
+    a.download = downloadName(file.name);
     return a;
   });
   $('result-links').replaceChildren(...links);
@@ -280,20 +278,32 @@ $('generate').addEventListener('click', async () => {
   if (state.busy || !state.selected.size) return;
   state.busy = true;
   updateSelection();
-  show('Generuji PDF, může to trvat několik sekund…');
+  $('status').textContent = 'Generuji PDF, může to trvat několik sekund…';
   try {
     const data = await api('POST', '/api/admin/examples/pdf', {
       ids: [...state.selected.keys()],
       title: $('pdf-title').value,
     });
     showResults(data.files);
+    $('status').textContent = '';
     show('PDF je připravené ke stažení.');
   } catch (err) {
+    $('status').textContent = '';
     show(err.message, true);
   } finally {
     state.busy = false;
     updateSelection();
   }
+});
+
+/* ---------- přepínač částí ---------- */
+
+$('tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tab]');
+  if (!b) return;
+  for (const t of $('tabs').querySelectorAll('[data-tab]')) t.setAttribute('aria-pressed', String(t === b));
+  $('panel-pdf').hidden = b.dataset.tab !== 'pdf';
+  $('panel-upload').hidden = b.dataset.tab !== 'upload';
 });
 
 /* ---------- start ---------- */

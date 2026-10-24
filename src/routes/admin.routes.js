@@ -2,11 +2,12 @@ import { Router } from 'express';
 import { Student } from '../models/Student.js';
 import { requireRole } from '../middleware/auth.js';
 import { hashPassword } from '../utils/password.js';
+import { isCredits } from '../utils/validate.js';
 import { destroyStudentSessions } from '../utils/session.js';
 import { isStudentNumber, isValidPassword, isName } from '../utils/validate.js';
 import { Lesson } from '../models/Lesson.js';
 import { LessonRecord } from '../models/LessonRecord.js';
-import { LECTURERS } from '../config/schedule.js';
+import { LECTURERS, CAPACITY } from '../config/schedule.js';
 import { isValidDate, todayInPrague } from '../utils/calendar.js';
 import { Progress } from '../models/Progress.js';
 import { buildProgress, applyProgressUpdate, SECTION_LEVEL, LEVEL_DEFS } from '../utils/progress.js';
@@ -18,11 +19,12 @@ router.use(requireRole('admin'));
 
 const BAD_NUMBER = { error: 'Číslo studenta musí mít přesně 6 číslic' };
 const BAD_PASSWORD = { error: 'Heslo musí mít 8 až 72 znaků' };
+const BAD_CREDITS = { error: 'Kredity musí být celé číslo 0 až 100 000' };
 
 router.get('/students', async (req, res) => {
   const students = await Student.find()
     .sort({ studentNumber: 1 })
-    .select('studentNumber name createdAt')
+    .select('studentNumber name createdAt credits')
     .lean();
 
   const progressDocs = await Progress.find({ student: { $in: students.map((s) => s._id) } })
@@ -41,6 +43,7 @@ router.get('/students', async (req, res) => {
         level: progress.currentLevel, // null = kurz dokončen
         levelPercent: level ? level.percent : 100,
         courseCompleted: progress.courseCompleted,
+        credits: s.credits ?? 0,
       };
     })
   );
@@ -48,15 +51,18 @@ router.get('/students', async (req, res) => {
 
 router.post('/students', async (req, res) => {
   const { studentNumber, name, password } = req.body ?? {};
+  const credits = req.body?.credits ?? 0;
   if (!isStudentNumber(studentNumber)) return res.status(400).json(BAD_NUMBER);
   if (!isName(name)) return res.status(400).json({ error: 'Jméno musí mít 1 až 100 znaků' });
   if (!isValidPassword(password)) return res.status(400).json(BAD_PASSWORD);
+  if (!isCredits(credits)) return res.status(400).json(BAD_CREDITS)
 
   try {
     await Student.create({
       studentNumber,
       name: name.trim(),
       passwordHash: await hashPassword(password),
+      credits: credits,
     });
   } catch (err) {
     if (err.code === 11000) {
@@ -83,6 +89,38 @@ router.patch('/students/:studentNumber/password', async (req, res) => {
   res.json({ ok: true });
 });
 
+router.patch('/students/:studentNumber', async (req, res) => {
+  const { studentNumber } = req.params;
+  if (!isStudentNumber(studentNumber)) return res.status(400).json(BAD_NUMBER);
+
+  const { name, creditsDelta } = req.body ?? {};
+  const set = {};
+  const filter = { studentNumber };
+  const update = {};
+
+  if (name !== undefined) {
+    if (!isName(name)) return res.status(400).json({ error: 'Jméno musí mít 1 až 100 znaků' });
+    set.name = name.trim();
+  }
+  if (creditsDelta !== undefined && creditsDelta !== 0) {
+    if (!Number.isInteger(creditsDelta) || Math.abs(creditsDelta) > 100000) {
+      return res.status(400).json({ error: 'Změna kreditů musí být celé číslo' });
+    }
+    // Podmínka ve filtru hlídá, aby počet kreditů nešel pod 0 ani nad 100 000
+    filter.credits = creditsDelta < 0 ? { $gte: -creditsDelta } : { $lte: 100000 - creditsDelta };
+    update.$inc = { credits: creditsDelta };
+  }
+  if (Object.keys(set).length) update.$set = set;
+  if (!Object.keys(update).length) return res.status(400).json({ error: 'Nic k uložení' });
+
+  const result = await Student.updateOne(filter, update);
+  if (!result.matchedCount) {
+    if (!(await Student.exists({ studentNumber }))) return res.status(404).json({ error: 'Student nenalezen' });
+    return res.status(409).json({ error: 'Kredity nelze změnit: student by měl méně než 0 nebo více než 100 000' });
+  }
+  res.json({ ok: true });
+});
+
 router.delete('/students/:studentNumber', async (req, res) => {
   const { studentNumber } = req.params;
   if (!isStudentNumber(studentNumber)) return res.status(400).json(BAD_NUMBER);
@@ -90,15 +128,17 @@ router.delete('/students/:studentNumber', async (req, res) => {
   const student = await Student.findOneAndDelete({ studentNumber });
   if (!student) return res.status(404).json({ error: 'Student nenalezen' });
 
+  // uvolní jeho místa v lekcích a smaže navázaná data
   await Lesson.updateMany(
     { students: student._id },
     { $pull: { students: student._id }, $inc: { count: -1 } }
   );
-
-  await LessonRecord.deleteMany({ student: student._id });
-  await Progress.deleteOne({ student: student._id });
-
+  await Promise.all([
+    LessonRecord.deleteMany({ student: student._id }),
+    Progress.deleteMany({ student: student._id }),
+  ]);
   await destroyStudentSessions(student.id);
+
   res.json({ ok: true });
 });
 
@@ -213,65 +253,97 @@ router.put('/students/:studentNumber/lessons/records', async (req, res) => {
   res.json({ ok: true });
 });
 
-const MAX_PAST_LESSONS = 1000;
+const MAX_LESSONS = 1000;
 
-// Přehled všech proběhlých lekcí (jeden řádek = jeden student na jedné lekci)
-router.get('/lessons/past', async (req, res) => {
-  const today = todayInPrague();
+// Seznam lekcí: scope=past (do dneška včetně) nebo upcoming (od zítřka)
+router.get('/lessons', async (req, res) => {
+  const scope = req.query.scope === 'upcoming' ? 'upcoming' : 'past';
   const str = (v) => (typeof v === 'string' && v ? v : null);
   const lecturer = str(req.query.lecturer);
   const from = str(req.query.from);
   const to = str(req.query.to);
-  const paid = req.query.paid === 'yes' || req.query.paid === 'no' ? req.query.paid : null;
 
   if (lecturer && !LECTURERS.includes(lecturer)) return res.status(400).json({ error: 'Neznámý lektor' });
   if ((from && !isValidDate(from)) || (to && !isValidDate(to))) {
     return res.status(400).json({ error: 'Neplatné datum' });
   }
 
-  // Proběhlá = dnes nebo dříve
-  const dateFilter = { $lte: to && to < today ? to : today };
-  if (from) dateFilter.$gte = from;
-
-  const lessonFilter = { date: dateFilter, count: { $gt: 0 } };
-  const recordFilter = { date: dateFilter };
-  if (lecturer) {
-    lessonFilter.lecturer = lecturer;
-    recordFilter.lecturer = lecturer;
+  const today = todayInPrague();
+  const range = {};
+  if (scope === 'past') range.$lte = to && to < today ? to : today;
+  else {
+    range.$gt = today;
+    if (to) range.$lte = to;
   }
+  if (from) range.$gte = from;
 
-  const lessons = await Lesson.find(lessonFilter)
+  const filter = { date: range, count: { $gt: 0 } };
+  if (lecturer) filter.lecturer = lecturer;
+
+  const lessons = await Lesson.find(filter)
     .select('lecturer date hour students')
-    .sort({ date: -1, hour: -1, lecturer: 1 })
-    .limit(MAX_PAST_LESSONS)
+    .sort(scope === 'past' ? { date: -1, hour: -1, lecturer: 1 } : { date: 1, hour: 1, lecturer: 1 })
+    .limit(MAX_LESSONS)
     .populate('students', 'studentNumber name')
     .lean();
 
-  const records = await LessonRecord.find(recordFilter)
-    .select('student lecturer date hour attended paid')
-    .lean();
-  const recordMap = new Map(records.map((r) => [`${r.student}|${r.lecturer}|${r.date}|${r.hour}`, r]));
-
-  const rows = [];
-  for (const l of lessons) {
-    const students = l.students.filter(Boolean).sort((a, b) => a.studentNumber.localeCompare(b.studentNumber));
-    for (const s of students) {
-      const rec = recordMap.get(`${s._id}|${l.lecturer}|${l.date}|${l.hour}`);
-      const isPaid = rec?.paid ?? false;
-      if ((paid === 'yes' && !isPaid) || (paid === 'no' && isPaid)) continue;
-      rows.push({
-        date: l.date,
-        hour: l.hour,
-        lecturer: l.lecturer,
-        studentNumber: s.studentNumber,
-        name: s.name,
-        attended: rec?.attended ?? null,
-        paid: isPaid,
-      });
-    }
+  let recordMap = new Map();
+  if (scope === 'past') {
+    const recordFilter = { date: range };
+    if (lecturer) recordFilter.lecturer = lecturer;
+    const records = await LessonRecord.find(recordFilter).select('student lecturer date hour attended').lean();
+    recordMap = new Map(records.map((r) => [`${r.student}|${r.lecturer}|${r.date}|${r.hour}`, r]));
   }
 
-  res.json({ rows, truncated: lessons.length === MAX_PAST_LESSONS });
+  res.json({
+    truncated: lessons.length === MAX_LESSONS,
+    lessons: lessons.map((l) => ({
+      lecturer: l.lecturer,
+      date: l.date,
+      hour: l.hour,
+      students: l.students
+        .filter(Boolean)
+        .sort((a, b) => a.studentNumber.localeCompare(b.studentNumber))
+        .map((s) => ({
+          studentNumber: s.studentNumber,
+          name: s.name,
+          attended: recordMap.get(`${s._id}|${l.lecturer}|${l.date}|${l.hour}`)?.attended ?? null,
+        })),
+    })),
+  });
+});
+
+// Přehled jedné lekce
+router.get('/lessons/detail', async (req, res) => {
+  const { lecturer, date } = req.query;
+  const hour = Number(req.query.hour);
+  if (typeof lecturer !== 'string' || !LECTURERS.includes(lecturer) || !isValidDate(date) ||
+      !Number.isInteger(hour) || hour < 8 || hour > 20) {
+    return res.status(400).json({ error: 'Neplatná lekce' });
+  }
+
+  const lesson = await Lesson.findOne({ lecturer, date, hour })
+    .select('students')
+    .populate('students', 'studentNumber name')
+    .lean();
+  const students = (lesson?.students ?? []).filter(Boolean);
+  if (!students.length) return res.status(404).json({ error: 'Lekce nenalezena nebo na ní nejsou přihlášení studenti' });
+
+  const records = await LessonRecord.find({ lecturer, date, hour }).select('student attended').lean();
+  const attendance = new Map(records.map((r) => [String(r.student), r.attended]));
+
+  res.json({
+    lecturer, date, hour,
+    past: date <= todayInPrague(),
+    capacity: CAPACITY,
+    students: students
+      .sort((a, b) => a.studentNumber.localeCompare(b.studentNumber))
+      .map((s) => ({
+        studentNumber: s.studentNumber,
+        name: s.name,
+        attended: attendance.get(String(s._id)) ?? null,
+      })),
+  });
 });
 
 

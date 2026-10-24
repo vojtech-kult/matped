@@ -8,6 +8,8 @@ import { LECTURERS, LECTURER_COLORS, CAPACITY, FIRST_HOUR, LAST_HOUR } from '../
 import { LessonRecord } from '../models/LessonRecord.js';
 import { Progress } from '../models/Progress.js';
 import { buildProgress } from '../utils/progress.js';
+import { Student } from '../models/Student.js';
+import { todayInPrague, hourInPrague } from '../utils/calendar.js';
 
 const router = Router();
 router.use(requireRole('student'));
@@ -22,6 +24,35 @@ function parseBooking(body) {
   return { lecturer, date, hour };
 }
 
+// Základní údaje přihlášeného studenta
+router.get('/me', async (req, res) => {
+  const s = await Student.findById(req.session.userId).select('studentNumber name credits').lean();
+  if (!s) return res.status(404).json({ error: 'Student nenalezen' });
+  res.json({ studentNumber: s.studentNumber, name: s.name ?? '', credits: s.credits ?? 0 });
+});
+
+// Nadcházející lekce studenta (nejvýše 15)
+router.get('/bookings', async (req, res) => {
+  const studentId = new mongoose.Types.ObjectId(req.session.userId);
+  const today = todayInPrague();
+  const nowHour = hourInPrague();
+  const { from } = bookableRange(); // od tohoto dne lze rezervaci rušit
+
+  const lessons = await Lesson.find({ students: studentId, date: { $gte: today } })
+    .select('-_id lecturer date hour')
+    .sort({ date: 1, hour: 1 })
+    .limit(30)
+    .lean();
+
+  res.json({
+    today,
+    lessons: lessons
+      .filter((l) => l.date > today || l.hour >= nowHour) // dnešní lekce, které už začaly, se nezobrazí
+      .slice(0, 15)
+      .map((l) => ({ ...l, cancellable: l.date >= from })),
+  });
+});
+
 // Rozvrh od zítřka: jen dny, kdy někdo učí, s obsazeností
 router.get('/slots', async (req, res) => {
   const { from, to } = bookableRange();
@@ -32,12 +63,14 @@ router.get('/slots', async (req, res) => {
     .lean();
   const lessonMap = new Map(lessons.map((l) => [`${l.lecturer}|${l.date}|${l.hour}`, l]));
   const me = String(req.session.userId);
+  const me2 = await Student.findById(req.session.userId).select('credits').lean();
 
   res.json({
     capacity: CAPACITY,
     colors: LECTURER_COLORS,
     firstHour: FIRST_HOUR,
     lastHour: LAST_HOUR,
+    credits: me2?.credits ?? 0,
     days: days.map((d) => ({
       date: d.date,
       year: d.year,
@@ -74,20 +107,35 @@ router.post('/bookings', async (req, res) => {
     return res.status(409).json({ error: 'V tuto dobu už máte rezervovanou lekci' });
   }
 
+  // 1 kredit = 1 lekce. Atomicky odečteme, jen pokud student nějaký má.
+  const charged = await Student.updateOne({ _id: studentId, credits: { $gte: 1 } }, { $inc: { credits: -1 } });
+  if (!charged.modifiedCount) {
+    return res.status(402).json({ error: 'Nemáte dostatek kreditů pro rezervaci lekce' });
+  }
+  const refund = () => Student.updateOne({ _id: studentId }, { $inc: { credits: 1 } });
+
   try {
-    // Atomicky: zapíše se jen když je volné místo a student tam ještě není.
-    // Při souběhu dvou studentů na poslední místo uspěje jen jeden.
-    await Lesson.updateOne(
-      { lecturer, date, hour, count: { $lt: CAPACITY }, students: { $ne: studentId } },
+    const result = await Lesson.updateOne(
+      { lecturer, date, hour, count: { $not: { $gte: CAPACITY } }, students: { $ne: studentId } },
       { $push: { students: studentId }, $inc: { count: 1 } },
       { upsert: true, setDefaultsOnInsert: false }
     );
-  } catch (err) {
-    // Lekce existuje, ale filtr nesedí (plno / už rezervováno) -> upsert narazí na unikátní index
-    if (err.code === 11000) {
-      return res.status(409).json({ error: 'Lekci se nepodařilo rezervovat (je obsazená nebo ji už máte)' });
+    if (!result.modifiedCount && !result.upsertedCount) {
+      await refund();
+      return res.status(409).json({ error: 'Lekci se nepodařilo rezervovat, zkuste to znovu' });
     }
-    throw err;
+  } catch (err) {
+    await refund(); // rezervace se nezapsala, kredit se vrací
+    if (err.code !== 11000) throw err;
+
+    const lesson = await Lesson.findOne({ lecturer, date, hour }).select('students').lean();
+    if (lesson?.students?.some((id) => id.equals(studentId))) {
+      return res.status(409).json({ error: 'Tuto lekci už máte rezervovanou' });
+    }
+    if (lesson && lesson.students.length >= CAPACITY) {
+      return res.status(409).json({ error: 'Lekce je už obsazená' });
+    }
+    return res.status(409).json({ error: 'Lekci se nepodařilo rezervovat, zkuste to znovu' });
   }
 
   res.status(201).json({ ok: true });
@@ -103,6 +151,8 @@ router.delete('/bookings', async (req, res) => {
     { $pull: { students: studentId }, $inc: { count: -1 } }
   );
   if (!result.modifiedCount) return res.status(404).json({ error: 'Rezervace nenalezena' });
+
+  await Student.updateOne({ _id: studentId }, { $inc: { credits: 1 } });
 
   await LessonRecord.deleteOne({ student: studentId, lecturer, date, hour });
   res.json({ ok: true });
