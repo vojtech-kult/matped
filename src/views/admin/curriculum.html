@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <Head title="Kurikulum" />
+  <link rel="stylesheet" href="/css/admin-app.css">
+  <link rel="stylesheet" href="curriculum.css">
+</head>
+<body class="app">
+  <AdminTopbar />
+  <div class="app-body">
+    <AdminSidebar active="curriculum" />
+
+    <main class="app-main">
+      <header class="app-head">
+        <h1>Kurikulum</h1>
+        <div class="seg" id="tabs" role="group" aria-label="Kurikulum" style="margin-top:1rem">
+          <button type="button" data-key="prijimacky" aria-pressed="true">Přijímačky</button>
+          <button type="button" data-key="maturita" aria-pressed="false">Maturita</button>
+        </div>
+      </header>
+
+      <div class="cur-bar">
+        <span id="summary" class="hint" role="status"></span>
+        <span class="cur-spacer"></span>
+        <button type="button" id="expand-all" class="btn btn-sm">Rozbalit vše</button>
+        <button type="button" id="collapse-all" class="btn btn-sm">Sbalit vše</button>
+      </div>
+
+      <div id="levels"></div>
+      <AdminSaveBar />
+    </main>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="curriculum.js"></script>
+</body>
+</html>

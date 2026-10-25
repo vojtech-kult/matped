@@ -1,6 +1,10 @@
 const clip = (text, max) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Vypne Markdown v údajích zadaných studentem nebo lektorem (jména, názvy)
+export const escapeMd = (text) => String(text).replace(/([\\*_~`|>[\]()#-])/g, '\\$1');
+export { clip };
+
 const TYPE_INFO = {
   poptavka: { title: 'Nová poptávka doučování', color: 0x16a34a },
   dotaz: { title: 'Nový dotaz', color: 0x2563eb },
@@ -37,11 +41,13 @@ function buildPayload(lead) {
   };
 }
 
-export async function sendLeadToDiscord(lead) {
+// Společné odeslání na webhook (s jedním opakováním při limitu Discordu). Při chybě vyhodí výjimku.
+async function postWebhook(payload) {
   const url = process.env.DISCORD_WEBHOOK_URL;
   if (!url) throw new Error('DISCORD_WEBHOOK_URL není nastaven');
 
-  const body = JSON.stringify(buildPayload(lead));
+  // výchozí jméno a zákaz pingů; hotový payload je může přepsat
+  const body = JSON.stringify({ username: 'MatPed forms', allowed_mentions: { parse: [] }, ...payload });
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     const res = await fetch(url, {
@@ -63,3 +69,10 @@ export async function sendLeadToDiscord(lead) {
     throw new Error(`Discord odpověděl stavem ${res.status}`);
   }
 }
+
+export async function sendLeadToDiscord(lead) {
+  await postWebhook(buildPayload(lead));
+}
+
+// Vlastní zpráva (embed) mimo formuláře z webu, např. dotazy studentů k videím
+export const sendDiscordPayload = postWebhook;

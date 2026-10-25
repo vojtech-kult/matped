@@ -1,0 +1,80 @@
+/* Stránka Kurikulum */
+.select-lecturer { display: none; } /* výběr lektora se tu nepoužívá */
+
+.cur-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+.cur-spacer { flex: 1; }
+
+.cur-note { margin-bottom: 1.25rem; padding: .6rem 1rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text-muted); }
+.cur-note summary { cursor: pointer; font-weight: 600; color: var(--text); }
+.cur-note ul { margin: .6rem 0 .2rem; padding-left: 1.2rem; }
+
+/* ---------- level ---------- */
+.cur-level { margin-bottom: 1rem; overflow: hidden; }
+.cur-level-head { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; }
+.cur-toggle {
+  flex: none; width: 2rem; height: 2rem; padding: 0; cursor: pointer;
+  background: transparent; border: 0; border-radius: 8px; color: var(--text-muted);
+}
+.cur-toggle:hover { background: var(--bg-hover); color: var(--text); }
+.cur-toggle::before {
+  content: ''; display: block; width: .55rem; height: .55rem; margin: auto;
+  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg); transition: transform .15s;
+}
+.cur-toggle[aria-expanded="true"]::before { transform: rotate(45deg); }
+.cur-num {
+  flex: none; display: grid; place-items: center; width: 2rem; height: 2rem;
+  font-weight: 700; color: var(--lvl-text, var(--badge-text)); background: var(--lvl-bg, var(--badge-bg)); border-radius: 8px;
+}
+.app input.cur-level-title {
+  flex: 1; min-width: 0; font-size: 1.05rem; font-weight: 700;
+  background: transparent; border-color: transparent;
+}
+.app input.cur-level-title:hover { border-color: var(--border-strong); }
+.app input.cur-level-title:focus { background: var(--input-bg); }
+.cur-meta { flex: none; font-size: .85rem; white-space: nowrap; color: var(--text-muted); }
+
+.cur-level-body { padding: .25rem 1rem 1rem; border-top: 1px solid var(--border); }
+
+/* ---------- podtémata ---------- */
+.cur-sections { margin: 0 0 .75rem; padding: 0; list-style: none; }
+.cur-section { padding: .5rem 0; border-bottom: 1px solid var(--divider); }
+.cur-row { display: flex; align-items: center; gap: .4rem; }
+.cur-idx { flex: none; width: 1.9rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.app input.cur-sec-title { flex: 1; min-width: 0; }
+.app .btn.cur-icon { flex: none; width: 2rem; height: 2rem; padding: 0; }
+.app .btn.cur-vid-btn { flex: none; gap: .4rem; }
+.cur-count {
+  min-width: 1.3rem; padding: 0 .35rem; font-size: .75rem; line-height: 1.3rem; text-align: center;
+  color: var(--text-muted); background: var(--bg-subtle); border-radius: 999px;
+}
+.cur-vid-btn.has .cur-count { color: var(--badge-text); background: var(--badge-bg); }
+.app .btn.cur-del:hover:not(:disabled) { color: var(--err); border-color: var(--err); }
+
+.app input.invalid { border-color: var(--err); }
+
+/* ---------- videa ---------- */
+.cur-videos { margin: .6rem 0 .2rem 2.3rem; padding: .75rem; background: var(--bg-page); border-radius: 10px; }
+.cur-video-list { margin: 0 0 .6rem; padding: 0; list-style: none; }
+.cur-video { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(12rem, 2fr) auto; gap: .5rem; margin-bottom: .5rem; align-items: start; }
+.cur-video input { width: 100%; min-width: 0; box-sizing: border-box; }
+.cur-url-err { display: block; min-height: 0; margin-top: .2rem; font-size: .8rem; color: var(--err); }
+.cur-video-actions { display: flex; gap: .4rem; }
+.cur-open { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.cur-empty { margin: 0 0 .6rem; color: var(--text-muted); }
+
+@media (max-width: 40rem) {
+  .cur-meta { display: none; }
+  .cur-videos { margin-left: 0; }
+  .cur-video { grid-template-columns: 1fr; }
+  .cur-row { flex-wrap: wrap; }
+  .app input.cur-sec-title { flex-basis: calc(100% - 2.5rem); }
+}
+
+/* barva levelu se střídá po pěti (--lv-N-* v theme.css) */
+.cur-level:nth-child(5n+1) { --lvl-bg: var(--lv-1-bg); --lvl-text: var(--lv-1-text); }
+.cur-level:nth-child(5n+2) { --lvl-bg: var(--lv-2-bg); --lvl-text: var(--lv-2-text); }
+.cur-level:nth-child(5n+3) { --lvl-bg: var(--lv-3-bg); --lvl-text: var(--lv-3-text); }
+.cur-level:nth-child(5n+4) { --lvl-bg: var(--lv-4-bg); --lvl-text: var(--lv-4-text); }
+.cur-level:nth-child(5n+5) { --lvl-bg: var(--lv-5-bg); --lvl-text: var(--lv-5-text); }
+.cur-level { border-top: 4px solid var(--lvl-bg, var(--border)); }

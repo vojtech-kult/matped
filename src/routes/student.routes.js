@@ -11,9 +11,11 @@ import { buildProgress } from '../utils/progress.js';
 import { Student } from '../models/Student.js';
 import { todayInPrague, hourInPrague } from '../utils/calendar.js';
 import { curriculumOf } from '../utils/progress.js';
+import materialsRoutes from './materials.routes.js';
 
 const router = Router();
 router.use(requireRole('student'));
+router.use('/materials', materialsRoutes);
 
 function parseBooking(body) {
   const { lecturer, date, hour } = body ?? {};

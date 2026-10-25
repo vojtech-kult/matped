@@ -13,11 +13,16 @@ import { Progress } from '../models/Progress.js';
 import { buildProgress, applyProgressUpdate } from '../utils/progress.js';
 import { saveTrackProgress, curriculumOf } from '../utils/progress.js';
 import { CURRICULUM_KEYS } from '../config/tracks.js';
+import curriculumRoutes from './curriculum.routes.js';
+import { VideoProgress } from '../models/VideoProgress.js';
+import { VideoFeedback } from '../models/VideoFeedback.js';
+
 
 const router = Router();
 
 // Všechny routy v tomto souboru vyžadují přihlášeného admina
 router.use(requireRole('admin'));
+router.use('/curricula', curriculumRoutes);
 
 const BAD_NUMBER = { error: 'Číslo studenta musí mít přesně 6 číslic' };
 const BAD_PASSWORD = { error: 'Heslo musí mít 8 až 72 znaků' };
@@ -146,6 +151,8 @@ router.delete('/students/:studentNumber', async (req, res) => {
   await Promise.all([
     LessonRecord.deleteMany({ student: student._id }),
     Progress.deleteMany({ student: student._id }),
+    VideoProgress.deleteMany({ student: student._id }),
+    VideoFeedback.deleteMany({ student: student._id }),
   ]);
   await destroyStudentSessions(student.id);
 

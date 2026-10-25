@@ -1,0 +1,43 @@
+/* Výukové materiály (studentská sekce); základ je v /css/admin-app.css */
+.mat-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; }
+.mat-summary-main { flex: 1; min-width: 14rem; }
+.mat-bar { height: .6rem; margin-top: .5rem; overflow: hidden; background: var(--progress-track); border-radius: 999px; }
+.mat-bar > div { height: 100%; width: 0; background: var(--progress-bar); border-radius: 999px; transition: width .3s; }
+
+.mat-level { margin-bottom: 1.25rem; }
+.mat-level-head { display: flex; align-items: center; gap: .75rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+.mat-num { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; font-weight: 700; color: var(--lvl-text, var(--badge-text)); background: var(--lvl-bg, var(--badge-bg)); border-radius: 8px; }
+.mat-level-head h2 { flex: 1; margin: 0; font-size: 1.05rem; }
+.mat-count { font-size: .85rem; color: var(--text-muted); white-space: nowrap; }
+
+.mat-section { padding: .9rem 1.25rem 1rem; border-bottom: 1px solid var(--divider); }
+.mat-section:last-child { border-bottom: 0; }
+.mat-section h3 { margin: 0 0 .6rem; font-size: .95rem; color: var(--text-muted); }
+
+.mat-videos { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+.mat-video {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.25rem; padding: .75rem 1rem;
+  background: var(--bg-page); border: 1px solid transparent; border-radius: 10px;
+}
+.mat-video.done { background: var(--bg-surface); border-color: var(--border); }
+.mat-video.help { border-color: var(--brand-primary); background: var(--bg-surface); }
+.mat-info { flex: 1 1 14rem; min-width: 0; }
+.mat-title { display: block; font-weight: 600; overflow-wrap: anywhere; }
+.mat-link { font-size: .85rem; color: var(--text-muted); }
+.mat-link:hover { color: var(--link); }
+.mat-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+.mat-check { display: inline-flex; align-items: center; gap: .5rem; font-weight: 600; cursor: pointer; }
+.mat-check input { width: 1.2rem; height: 1.2rem; accent-color: var(--brand-primary); cursor: pointer; }
+.mat-rate button:disabled { opacity: .45; cursor: not-allowed; }
+.mat-note { flex-basis: 100%; margin: 0; font-size: .85rem; color: var(--text-muted); }
+.mat-note button { padding: 0; font: inherit; font-weight: 600; color: var(--text); background: none; border: 0; text-decoration: underline; cursor: pointer; }
+
+#ask-message { width: 100%; box-sizing: border-box; resize: vertical; }
+
+/* barva levelu se střídá po pěti (--lv-N-* v theme.css) */
+.mat-level:nth-child(5n+1) { --lvl-bg: var(--lv-1-bg); --lvl-text: var(--lv-1-text); }
+.mat-level:nth-child(5n+2) { --lvl-bg: var(--lv-2-bg); --lvl-text: var(--lv-2-text); }
+.mat-level:nth-child(5n+3) { --lvl-bg: var(--lv-3-bg); --lvl-text: var(--lv-3-text); }
+.mat-level:nth-child(5n+4) { --lvl-bg: var(--lv-4-bg); --lvl-text: var(--lv-4-text); }
+.mat-level:nth-child(5n+5) { --lvl-bg: var(--lv-5-bg); --lvl-text: var(--lv-5-text); }
+.mat-level { border-top: 4px solid var(--lvl-bg, var(--border)); }

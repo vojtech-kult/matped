@@ -1,19 +1,9 @@
 /* =========================================================
    MatPed – wireframe styl
-   Změna vzhledu = úprava proměnných v :root a pravidel níže.
+   Změna barev: theme.css. Tento soubor řeší jen rozložení a tvar prvků.
    ========================================================= */
 :root {
-  --wf-bg: #f3f4f6;
-  --wf-bg-alt: #e5e7eb;
-  --wf-panel: #ffffff;
-  --wf-box: #d1d5db;
-  --wf-box-dark: #9ca3af;
-  --wf-line: #6b7280;
-  --wf-dark: #374151;
-  --wf-text: #111827;
-  --wf-muted: #4b5563;
-  --wf-ok: #166534;
-  --wf-err: #b91c1c;
+  /* Barvy jsou v theme.css (--wf-bg, --wf-box, --wf-dark… jsou tam aliasy na nová jména). */
   --wf-max: 72rem;   /* šířka obsahu */
   --wf-pad: 1rem;    /* boční odsazení */
   --wf-radius: 2px;
@@ -35,8 +25,8 @@ h1 { font-size: 1.75rem; }
 h2 { font-size: 1.25rem; }
 h3 { font-size: 1.05rem; }
 p { margin: 0 0 .75rem; }
-a { color: var(--wf-dark); }
-:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+a { color: var(--link); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 ul.plain { list-style: none; margin: 0; padding: 0; }
 ul.plain li { padding: .15rem 0; }
 .hint { color: var(--wf-muted); font-size: .9rem; margin: 0; }
@@ -78,7 +68,7 @@ ul.plain li { padding: .15rem 0; }
 /* ---------- formuláře ---------- */
 input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   font: inherit; padding: .4rem .6rem; max-width: 100%;
-  background: #fff; border: 1px solid var(--wf-line); border-radius: var(--wf-radius);
+  background: var(--bg-surface); border: 1px solid var(--wf-line); border-radius: var(--wf-radius);
 }
 .field { display: flex; flex-direction: column; gap: .25rem; font-size: .9rem; font-weight: 600; }
 .field input, .field select, .field textarea { font-weight: 400; }
@@ -88,12 +78,12 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
 
 .btn {
   display: inline-block; padding: .4rem .9rem; font: inherit; text-decoration: none; cursor: pointer;
-  background: #fff; color: var(--wf-text); border: 1px solid var(--wf-line); border-radius: var(--wf-radius);
+  background: var(--btn-bg); color: var(--btn-text); border: 1px solid var(--wf-line); border-radius: var(--wf-radius);
 }
 .btn:hover:not(:disabled) { background: var(--wf-box); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn-primary { background: var(--wf-dark); border-color: #111827; color: #fff; }
-.btn-primary:hover:not(:disabled) { background: #111827; }
+.btn-primary { background: var(--btn-primary-bg); border-color: var(--primary-hover); color: var(--btn-primary-text); }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
 .btn-danger { border-color: var(--wf-err); color: var(--wf-err); }
 
 /* ---------- zprávy a tabulky ---------- */
@@ -112,16 +102,16 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   margin-bottom: 1.25rem; padding: .6rem .8rem;
   background: var(--wf-bg); border: 1px solid var(--wf-line);
 }
-.savebar .dirty { color: #b45309; font-weight: 600; }
+.savebar .dirty { color: var(--warn); font-weight: 600; }
 
 /* ---------- wireframe prvky ---------- */
 .wf-box {
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--wf-box); border: 1px dashed var(--wf-line); color: #374151; font-size: .8rem;
+  background: var(--wf-box); border: 1px dashed var(--wf-line); color: var(--brand-primary); font-size: .8rem;
 }
 .wf-logo { width: 8rem; height: 2.5rem; font-weight: 700; letter-spacing: .05em; }
 .wf-badge { padding: .15rem .6rem; border-radius: var(--wf-radius); }
-.wf-badge.admin { background: var(--wf-dark); border-style: solid; color: #fff; }
+.wf-badge.admin { background: var(--badge-bg); border-style: solid; color: var(--badge-text); }
 
 /* zástupný obrázek (přeškrtnutý obdélník) */
 .ph {
@@ -130,7 +120,7 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
     linear-gradient(to top right, transparent calc(50% - 1px), var(--wf-line) 50%, transparent calc(50% + 1px)),
     linear-gradient(to bottom right, transparent calc(50% - 1px), var(--wf-line) 50%, transparent calc(50% + 1px)),
     var(--wf-box);
-  border: 1px solid var(--wf-line); color: #374151;
+  border: 1px solid var(--wf-line); color: var(--brand-primary);
 }
 .ph span { padding: .1rem .6rem; background: var(--wf-bg); }
 .ph-icon { width: 3.5rem; min-height: 3.5rem; height: 3.5rem; margin-bottom: .75rem; }
@@ -149,13 +139,13 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   background: var(--wf-box); border: 1px solid var(--wf-line);
 }
 .navbar-links a:hover { background: var(--wf-box-dark); }
-.navbar-links a[aria-current="page"] { background: var(--wf-dark); border-color: #111827; color: #fff; }
+.navbar-links a[aria-current="page"] { background: var(--nav-active-bg); border-color: var(--primary-hover); color: var(--nav-active-text); }
 .navbar-actions { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
 
 /* ---------- patička ---------- */
 .footer { margin-top: 2rem; padding: 1.5rem 0 1rem; background: var(--wf-bg); border-top: 2px solid var(--wf-line); }
 .footer .cols-3 { margin-bottom: 1rem; }
-.footer-note { margin: 0; color: var(--wf-muted); font-size: .85rem; }
+.footer-note { margin: 0; color: var(--footer-text); font-size: .85rem; }
 .footer-app { padding: 1rem 0; }
 
 /* ---------- veřejné stránky ---------- */
@@ -164,21 +154,6 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
 @media (max-width: 48rem) { .banner { grid-template-columns: 1fr; } }
 .cta { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
 .auth { max-width: 26rem; margin: 3rem auto; }
-
-/* Horní posuvná lišta (viz top-scroll.js) */
-.scroll-top { overflow-x: auto; overflow-y: hidden; margin-bottom: 2px; }
-.scroll-top > div { height: 1px; }
-
-/* ---------- modální okno (nativní <dialog>) ---------- */
-.modal {
-  width: min(32rem, calc(100% - 2rem)); max-height: calc(100vh - 2rem); padding: 0;
-  background: var(--wf-panel); color: var(--wf-text); border: 2px solid var(--wf-dark);
-}
-.modal::backdrop { background: rgba(17, 24, 39, .5); }
-.modal-box { padding: 1.25rem; }
-.modal-box h2 { margin-bottom: 1rem; }
-.modal-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--wf-box); }
-
 /* ---------- záložky ---------- */
 .tabs {
   display: flex; flex-wrap: wrap; gap: .4rem; padding: .6rem 1rem;
@@ -189,7 +164,7 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   background: var(--wf-box); border: 1px solid var(--wf-line); border-radius: var(--wf-radius);
 }
 .tab:hover { background: var(--wf-box-dark); }
-.tab[aria-selected="true"] { background: var(--wf-dark); border-color: #111827; color: #fff; }
+.tab[aria-selected="true"] { background: var(--nav-active-bg); border-color: var(--primary-hover); color: var(--nav-active-text); }
 
 /* ---------- hvězdičkové hodnocení ---------- */
 .sr-only {
@@ -204,15 +179,8 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
 .stars { position: relative; display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; gap: .15rem; }
 .stars input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .stars label { font-size: 2rem; line-height: 1; cursor: pointer; color: var(--wf-box-dark); }
-.stars label:hover, .stars label:hover ~ label, .stars input:checked ~ label { color: #f59e0b; }
-.stars input:focus-visible + label { outline: 3px solid #2563eb; outline-offset: 2px; }
-
-/* Dvě pole vedle sebe (např. e-mail a telefon) */
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
-.field-row .field { min-width: 0; }
-.field-row input { width: 100%; }
-@media (max-width: 30rem) { .field-row { grid-template-columns: 1fr; } }
-
+.stars label:hover, .stars label:hover ~ label, .stars input:checked ~ label { color: var(--star); }
+.stars input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 2px; }
 /* =========================================================
    Úvodní stránka
    ========================================================= */
@@ -265,11 +233,7 @@ html { scroll-behavior: smooth; }
 .price { max-width: 24rem; margin-bottom: 0; text-align: center; }
 .price-value { margin: 0 0 .5rem; font-size: 3rem; font-weight: 800; line-height: 1.1; }
 
-.form-narrow { max-width: 48rem; margin-inline: auto; }
-
-/* Vycentrovaná sekce (nadpis, perex i formulář uprostřed stránky) */
-.section-center .section-head { margin-inline: auto; text-align: center; }
-.section-center .tabs { justify-content: center; }
+.form-narrow { max-width: 48rem; }
 
 /* Úvodní stránka končí rovnou patičkou, bez mezery mezi nimi */
 main.home + .footer { margin-top: 0; }
