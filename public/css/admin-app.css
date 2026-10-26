@@ -250,20 +250,37 @@ details.level summary { cursor: pointer; font-weight: 600; }
   .seg button { flex: 1 1 auto; padding: .5rem .6rem; }
   .card-sub > .field { width: 100%; }
 
-  /* tabulky: každý řádek je karta, popisky sloupců doplňuje admin-nav.js (data-label) */
+  /* tabulky: každý řádek je karta. Hlavní údaj (datum / jméno) nahoře, čas / číslo vpravo,
+     ostatní údaje pod sebou jako „popisek | hodnota“, tlačítka dole přes celou šířku.
+     Popisky sloupců doplňuje admin-nav.js (data-label) podle hlavičky tabulky. */
   .tbl-wrap { overflow-x: visible; }
   .tbl, .tbl tbody { display: block; }
   .tbl thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .tbl tr { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .5rem 1.25rem; padding: .75rem; border-bottom: 1px solid var(--divider); }
-  .tbl tbody tr:last-child { border-bottom: 0; }
-  .tbl td, .tbl tbody tr:last-child td { display: block; min-width: 0; padding: 0; border: 0; }
+  .tbl tbody { display: flex; flex-direction: column; gap: .65rem; padding: .75rem; }
+  .tbl tbody tr:hover { background: var(--bg-surface); }
+  .tbl tr {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: .45rem .75rem; padding: .8rem .9rem;
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-card);
+  }
+  .tbl tr.selected { border-color: var(--brand-primary); box-shadow: 0 0 0 1px var(--brand-primary); }
+  .tbl td { display: flex; align-items: baseline; gap: .75rem; grid-column: 1 / -1; min-width: 0; padding: 0; border: 0; }
   .tbl td[data-label]::before {
-    content: attr(data-label); display: block; margin-bottom: .1rem;
+    content: attr(data-label); flex: 0 0 5.6rem;
     font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted);
   }
-  .tbl td:has(.pills, progress, .progress) { flex: 1 1 100%; }
-  .row-actions { opacity: 1; }
-  .tbl td.actions { width: auto; margin-left: auto; align-self: center; text-align: right; }
+  /* hlavní údaj karty a údaj vpravo nahoře nemají popisek */
+  .tbl td[data-label="Datum"], .tbl td[data-label="Jméno"] { grid-column: 1; grid-row: 1; display: block; font-size: 1.05rem; font-weight: 700; color: var(--heading-color); }
+  .tbl td[data-label="Čas"], .tbl td[data-label="Číslo"] { grid-column: 2; grid-row: 1; display: block; font-weight: 600; text-align: right; white-space: nowrap; color: var(--text-muted); }
+  .tbl td[data-label="Datum"]::before, .tbl td[data-label="Jméno"]::before, .tbl td[data-label="Čas"]::before { content: none; }
+  .tbl td[data-label="Číslo"]::before { content: '#'; flex: none; font-size: inherit; letter-spacing: 0; }
+  .tbl td > .pills { flex: 1; min-width: 0; }
+  .tbl td progress { display: block; width: 100%; margin-top: .35rem; }
+  .tbl td select { flex: 1; min-width: 0; }
+  .tbl td > span { min-width: 0; flex: 1; }
+  .tbl td.actions { display: flex; gap: .5rem; width: auto; margin: .2rem 0 0; padding-top: .7rem; border-top: 1px solid var(--divider); text-align: left; }
+  .tbl td.actions:not(:has(*)) { display: none; }
+  .tbl td.actions .row-actions { display: flex; flex: 1; gap: .5rem; opacity: 1; }
+  .tbl td.actions .btn { flex: 1 1 0; min-height: 2.5rem; }
   .tbl tr.changed { background: var(--highlight); }
   .tbl tr.changed td { background: transparent; }
 
