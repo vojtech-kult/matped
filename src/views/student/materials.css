@@ -41,3 +41,22 @@
 .mat-level:nth-child(5n+4) { --lvl-bg: var(--lv-4-bg); --lvl-text: var(--lv-4-text); }
 .mat-level:nth-child(5n+5) { --lvl-bg: var(--lv-5-bg); --lvl-text: var(--lv-5-text); }
 .mat-level { border-top: 4px solid var(--lvl-bg, var(--border)); }
+
+/* ---------- mobilní zobrazení ---------- */
+@media (max-width: 40rem) {
+  .mat-summary { gap: .75rem; }
+  .mat-summary-main { flex-basis: 100%; min-width: 0; }
+  .mat-summary .seg { display: flex; width: 100%; }
+  .mat-summary .seg button { flex: 1 1 auto; padding: .5rem .4rem; font-size: .85rem; }
+  .mat-level { margin-bottom: 1rem; }
+  .mat-level-head { flex-wrap: wrap; gap: .4rem .6rem; padding: .75rem; }
+  .mat-count { flex: 1 1 100%; }
+  .mat-section { padding: .75rem; }
+  .mat-video { padding: .7rem .75rem; }
+  .mat-info { flex-basis: 100%; }
+  .mat-controls { width: 100%; }
+  .mat-check { min-height: 2.5rem; }
+  .mat-check input { width: 1.4rem; height: 1.4rem; }
+  .mat-rate { display: flex; flex: 1 1 100%; gap: .5rem; }
+  .mat-rate .btn { flex: 1 1 0; }
+}

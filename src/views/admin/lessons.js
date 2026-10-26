@@ -13,6 +13,7 @@ if (missing.length) {
 }
 
 const ATTENDANCE = { true: 'Přišel', false: 'Nepřišel' };
+const MAX_NOTE = 2000;
 
 const state = {
   scope: 'past',
@@ -22,6 +23,7 @@ const state = {
   active: null,    // číslo studenta s viditelným panelem
   levels: new Map(), // číslo studenta -> { progress, sections, tests, saved }
   att: new Map(),    // neuložená docházka: číslo studenta -> true/false
+  notes: new Map(),  // rozepsaná poznámka (jen pokud se liší od uložené): číslo studenta -> text
   busy: false,
 };
 
@@ -121,7 +123,7 @@ function renderList() {
 
 const levelDirty = (entry) => diff(entry.sections, entry.saved.sections) + diff(entry.tests, entry.saved.tests) > 0;
 const lessonDirty = () =>
-  state.att.size > 0 || [...state.levels.values()].some((v) => diff(v.sections, v.saved.sections) + diff(v.tests, v.saved.tests) > 0);
+  state.att.size > 0 || state.notes.size > 0 || [...state.levels.values()].some((v) => diff(v.sections, v.saved.sections) + diff(v.tests, v.saved.tests) > 0);
 const diff = (a, b) => [...a].filter((x) => !b.has(x)).length + [...b].filter((x) => !a.has(x)).length;
 
 async function loadLevel(number) {
@@ -137,6 +139,7 @@ async function openDetail(lecturer, date, hour) {
   state.detail = lesson;
   state.levels.clear();
   state.att.clear();
+  state.notes.clear();
   await Promise.all(lesson.students.map((s) => loadLevel(s.studentNumber)));
   state.active = lesson.students[0].studentNumber;
   window.scrollTo(0, 0);
@@ -147,6 +150,7 @@ function closeDetail() {
   state.detail = null;
   state.levels.clear();
   state.att.clear();
+  state.notes.clear();
   history.replaceState(null, '', location.pathname); // zahodí parametry z odkazu
   run(loadList);
 }
@@ -178,9 +182,8 @@ function levelPanel(student) {
     const field = el('label', 'field');
     field.style.maxWidth = '12rem';
     field.append(el('span', '', 'Docházka'), select);
+    field.style.marginBlock = "1rem";
     box.append(field);
-  } else {
-    box.append(el('p', 'hint', 'Docházku lze zapsat od dne konání lekce.'));
   }
 
   const cur = entry.progress.enabled === false ? null : currentLevelOf(entry);
@@ -188,7 +191,10 @@ function levelPanel(student) {
   else if (cur) addLevelEditor(box, entry, cur);
   else box.append(el('p', '', 'Kurz je dokončen, level není co upravovat.'));
 
-  const dirty = attDirty || levelDirty(entry);
+  box.append(progressLog(student, entry));
+  box.append(noteField(student));
+
+  const dirty = studentDirty(student.studentNumber);
   const row = el('div', 'row');
   row.style.marginTop = '1rem';
   const save = el('button', 'btn btn-primary', 'Uložit změny');
@@ -198,6 +204,62 @@ function levelPanel(student) {
   row.append(save);
   if (dirty) row.append(el('span', 'hint', 'Neuložené změny'));
   box.append(row);
+  return box;
+}
+
+const studentDirty = (number) =>
+  state.att.has(number) || state.notes.has(number) || levelDirty(state.levels.get(number));
+
+function noteField(student) {
+  const label = el('label', 'field lesson-note');
+  const area = el('textarea');
+  area.id = 'note-input';
+  area.rows = 5;
+  area.maxLength = MAX_NOTE;
+  area.value = state.notes.has(student.studentNumber) ? state.notes.get(student.studentNumber) : student.note ?? '';
+  label.append(el('span', '', 'Poznámky k lekci'), area);
+  return label;
+}
+
+function logItem(kind, text) {
+  const li = el('li', `log-${kind}`);
+  li.append(el('span', 'log-mark', kind === 'add' ? '✓' : '✗'), ` ${text}`);
+  return li;
+}
+
+// Pokrok zaznamenaný v této lekci (z databáze), seskupený podle levelu
+function progressLog(student, entry) {
+  const box = el('section', 'lesson-log');
+  box.append(el('h3', '', 'Pokrok zaznamenaný v této lekci'));
+  const log = student.progress;
+  if (!log) {
+    box.append(el('p', 'hint', entry.progress.enabled === false
+      ? 'Tento student nemá level systém.'
+      : 'V této lekci zatím nebyl zaznamenán žádný pokrok. Zaznamená se po uložení změn v levelu.'));
+    return box;
+  }
+  const groups = new Map(); // level -> { title, items: [] }
+  const group = (level, title) => {
+    const key = level ?? 0;
+    if (!groups.has(key)) groups.set(key, { level, title, items: [] });
+    return groups.get(key);
+  };
+  const section = (s, kind) => {
+    const g = group(s.level, s.levelTitle);
+    g.items.push(logItem(kind, s.title ?? 'Smazané podtéma'));
+  };
+  log.sectionsAdded.forEach((s) => section(s, 'add'));
+  log.sectionsRemoved.forEach((s) => section(s, 'del'));
+  for (const t of log.testsAdded) group(t.level, t.title).items.push(logItem('add', 'Závěrečný test splněn'));
+  for (const t of log.testsRemoved) group(t.level, t.title).items.push(logItem('del', 'Závěrečný test odebrán'));
+
+  if (log.label) box.append(el('p', 'hint', `Kurikulum: ${log.label}`));
+  for (const g of [...groups.values()].sort((a, b) => (a.level ?? 1e9) - (b.level ?? 1e9))) {
+    box.append(el('h4', '', g.level == null ? 'Ostatní' : `Level ${g.level}${g.title ? `: ${g.title}` : ''}`));
+    const ul = el('ul', 'log-list');
+    ul.append(...g.items);
+    box.append(ul);
+  }
   return box;
 }
 
@@ -287,6 +349,27 @@ $('student-tabs').addEventListener('click', (e) => {
   render();
 });
 
+function updateSaveState() {
+  const save = $('level-save');
+  if (!save) return;
+  const dirty = studentDirty(state.active);
+  save.disabled = !dirty;
+  let hint = save.parentElement.querySelector('.dirty-hint');
+  if (dirty && !hint) {
+    hint = el('span', 'hint dirty-hint', 'Neuložené změny');
+    save.after(hint);
+  } else if (!dirty && hint) hint.remove();
+}
+
+$('student-panel').addEventListener('input', (e) => {
+  if (e.target.id !== 'note-input') return;
+  const student = state.detail.students.find((s) => s.studentNumber === state.active);
+  const value = e.target.value;
+  if (value.trim() === (student.note ?? '').trim()) state.notes.delete(state.active);
+  else state.notes.set(state.active, value);
+  updateSaveState();
+});
+
 $('student-panel').addEventListener('change', (e) => {
   const box = e.target;
   if (box.id === 'att-select') {
@@ -319,24 +402,45 @@ $('student-panel').addEventListener('click', (e) => {
     const student = state.detail.students.find((s) => s.studentNumber === number);
     const { lecturer, date, hour } = state.detail;
     const errors = [];
-    if (state.att.has(number)) {
+    const attDirty = state.att.has(number);
+    const noteDirty = state.notes.has(number);
+    if (attDirty || noteDirty) {
       try {
-        const attended = state.att.get(number);
-        await api('PUT', `/api/admin/students/${enc(number)}/lessons/records`, { records: [{ lecturer, date, hour, attended }] });
-        student.attended = attended;
-        state.att.delete(number);
+        const record = { lecturer, date, hour };
+        if (attDirty) record.attended = state.att.get(number);
+        if (noteDirty) record.note = state.notes.get(number).trim();
+        await api('PUT', `/api/admin/students/${enc(number)}/lessons/records`, { records: [record] });
+        if (attDirty) {
+          student.attended = record.attended;
+          state.att.delete(number);
+        }
+        if (noteDirty) {
+          student.note = record.note;
+          state.notes.delete(number);
+        }
       } catch (err) {
-        errors.push(`Docházka: ${err.message}`);
+        errors.push(`Docházka/poznámky: ${err.message}`);
       }
     }
     if (levelDirty(entry)) {
       try {
-        await api('PUT', `/api/admin/students/${enc(number)}/progress`, { sections: [...entry.sections], tests: [...entry.tests] });
+        await api('PUT', `/api/admin/students/${enc(number)}/progress`, {
+          sections: [...entry.sections], tests: [...entry.tests], lesson: { lecturer, date, hour },
+        });
         await loadLevel(number);
       } catch (err) {
         errors.push(`Level: ${err.message}`);
       }
     }
+    // zaznamenaný pokrok z databáze (po uložení se změnil)
+    try {
+      const query = new URLSearchParams({ lecturer, date, hour: String(hour) });
+      const fresh = await api('GET', `/api/admin/lessons/detail?${query}`);
+      for (const f of fresh.students) {
+        const s = state.detail.students.find((x) => x.studentNumber === f.studentNumber);
+        if (s) s.progress = f.progress;
+      }
+    } catch { /* záznam se zobrazí při dalším otevření */ }
     if (errors.length) throw new Error(`Uloženo jen částečně. ${errors.join(' ')}`);
     Admin.toast('Uloženo.');
   });

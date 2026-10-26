@@ -25,3 +25,16 @@
 .slot.full { background: var(--disabled-bg); cursor: not-allowed; }
 .slot.full.mine { background: var(--c); cursor: pointer; }
 .slot.blocked { opacity: .35; cursor: not-allowed; }
+
+/* ---------- mobilní zobrazení ---------- */
+@media (max-width: 60rem) {
+  /* kalendář se posouvá do strany, dny a čísla týdnů zůstávají při posunu vidět */
+  .grid > .day { position: sticky; left: 0; z-index: 2; align-self: stretch; padding-right: .25rem; background: var(--bg-surface); }
+  .week-row { position: sticky; left: 0; justify-self: start; }
+}
+@media (max-width: 40rem) {
+  .grid { grid-template-columns: 4.75rem repeat(13, minmax(3.8rem, 1fr)); min-width: 54rem; }
+  .slot { min-height: 2.75rem; padding: .35rem .1rem; font-size: .75rem; }
+  .legend { line-height: 1.9; }
+  .card-head .legend { flex: 1 1 100%; }
+}

@@ -16,12 +16,14 @@ import { CURRICULUM_KEYS } from '../config/tracks.js';
 import curriculumRoutes from './curriculum.routes.js';
 import { VideoProgress } from '../models/VideoProgress.js';
 import { VideoFeedback } from '../models/VideoFeedback.js';
+import lessonRoutes from './admin.lessons.routes.js';
 
 
 const router = Router();
 
 // Všechny routy v tomto souboru vyžadují přihlášeného admina
 router.use(requireRole('admin'));
+router.use(lessonRoutes);
 router.use('/curricula', curriculumRoutes);
 
 const BAD_NUMBER = { error: 'Číslo studenta musí mít přesně 6 číslic' };

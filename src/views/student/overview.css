@@ -16,6 +16,8 @@
 .stat-credits strong { font-size: 2.5rem; }
 
 .hero { display: flex; gap: 1.5rem; align-items: center; }
+/* přebije úvodní „hero“ z wireframe.css (pozadí, vycentrování, velké odsazení), které sem omylem zasahovalo */
+.app .hero { flex: none; justify-content: flex-start; padding: 0; text-align: left; background: none; }
 .hero-main { flex: 1; min-width: 0; }
 .hero-main h3 { margin: .1rem 0 .75rem; font-size: 1.4rem; }
 .hero-main p { margin: .5rem 0 0; }
@@ -39,3 +41,19 @@ ul.sections { margin: .85rem 0 0; padding: 0; list-style: none; }
 ul.sections li { padding: .25rem 0; color: var(--text-muted); }
 ul.sections li.done { color: var(--text); }
 ul.sections li.test { margin-top: .5rem; padding-top: .6rem; border-top: 1px dashed var(--border-strong); font-weight: 600; }
+
+/* ---------- mobilní zobrazení ---------- */
+@media (max-width: 40rem) {
+  .stats { grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
+  .stat { padding: .85rem 1rem; }
+  .stat strong { font-size: 1.2rem; }
+  .stat-credits { grid-column: 1 / -1; }
+  .stat-credits strong { font-size: 2rem; }
+  .hero { gap: 1rem; align-items: center; flex-direction: row; }
+  .level-badge { width: 3.75rem; height: 3.75rem; font-size: 1.7rem; }
+  .hero-main h3 { font-size: 1.15rem; }
+  details.level { padding: .7rem .85rem; }
+  details.level summary { padding: .2rem 0; }
+  ul.sections li { padding: .4rem 0; }
+}
+@media (max-width: 24rem) { .stats { grid-template-columns: 1fr; } .hero { flex-direction: column; align-items: flex-start; } }

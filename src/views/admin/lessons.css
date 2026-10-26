@@ -1,0 +1,21 @@
+/* Detail lekce: poznámky a záznam pokroku */
+.lesson-note { display: block; max-width: 48rem; margin-top: 1.25rem; }
+.lesson-note textarea {
+  display: block; width: 100%; min-height: 7rem; box-sizing: border-box; margin-top: .3rem;
+  resize: vertical; font: inherit; line-height: 1.5;
+}
+
+.lesson-log { margin-top: 1.25rem; padding: .75rem 1rem; max-width: 48rem; background: var(--neutral-bg-alt, var(--wf-bg-alt)); border-radius: 10px; }
+.lesson-log h3 { margin: 0 0 .4rem; }
+.lesson-log h4 { margin: .6rem 0 .2rem; font-size: .95rem; }
+.log-list { margin: 0; padding: 0; list-style: none; }
+.log-list li { padding: .1rem 0; }
+.log-mark { display: inline-block; width: 1.1rem; font-weight: 700; }
+.log-add .log-mark { color: var(--wf-ok); }
+.log-del .log-mark { color: var(--wf-err); }
+.log-del { color: var(--wf-muted); }
+
+@media (max-width: 40rem) {
+  .lesson-log { padding: .6rem .75rem; }
+  .lesson-note textarea { min-height: 8rem; }
+}

@@ -10,6 +10,12 @@ const lessonRecordSchema = new mongoose.Schema(
     hour: { type: Number, required: true, min: 8, max: 20 },
     attended: { type: Boolean, default: null }, // null = nezapsáno
     paid: { type: Boolean, default: false },
+    note: { type: String, maxlength: 2000, default: '' },
+    progress: {
+      curriculum: String,
+      sectionsAdded: [String], sectionsRemoved: [String],
+      testsAdded: [Number], testsRemoved: [Number],
+    },
   },
   { timestamps: true }
 );

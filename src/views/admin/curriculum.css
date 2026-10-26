@@ -78,3 +78,16 @@
 .cur-level:nth-child(5n+4) { --lvl-bg: var(--lv-4-bg); --lvl-text: var(--lv-4-text); }
 .cur-level:nth-child(5n+5) { --lvl-bg: var(--lv-5-bg); --lvl-text: var(--lv-5-text); }
 .cur-level { border-top: 4px solid var(--lvl-bg, var(--border)); }
+
+/* ---------- mobilní zobrazení (doplněk) ---------- */
+@media (max-width: 40rem) {
+  .cur-bar .hint { flex: 1 1 100%; }
+  .cur-spacer { display: none; }
+  .cur-level-head { gap: .5rem; padding: .6rem .6rem; }
+  .cur-level-body { padding: .25rem .6rem .75rem; }
+  .cur-idx { display: none; }
+  .app .btn.cur-icon { width: 2.5rem; height: 2.5rem; }
+  .cur-videos { padding: .6rem; }
+  .cur-video-actions { justify-content: flex-end; }
+  .cur-note { padding: .5rem .75rem; }
+}

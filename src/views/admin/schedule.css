@@ -43,3 +43,20 @@
 .chip.once.booked { background: var(--cal-once-booked-bg); border-color: var(--cal-once-booked-border); }
 .chip.off { background: repeating-linear-gradient(45deg, var(--cal-off-stripe-a), var(--cal-off-stripe-a) 4px, var(--cal-off-stripe-b) 4px, var(--cal-off-stripe-b) 6px); }
 .chip.orphan { background: var(--cell-bg); border: 3px solid var(--cal-orphan); }
+
+/* ---------- mobilní zobrazení ---------- */
+@media (max-width: 56rem) {
+  /* sloupec s dny zůstane při posunu kalendáře vidět */
+  .grid > .day { position: sticky; left: 0; z-index: 2; align-self: stretch; display: flex; flex-direction: column; justify-content: center; padding-right: .25rem; background: var(--bg-surface); }
+}
+@media (max-width: 40rem) {
+  .grid { grid-template-columns: 5rem repeat(13, minmax(3.4rem, 1fr)); min-width: 58rem; }
+  .week-nav .field input { width: 4.5rem; }
+  .week-nav .btn { min-width: 2.5rem; }
+  #week-range { flex: 1 1 100%; margin-left: 0; }
+  .legend { display: block; line-height: 2.1; }
+  .chip { margin-left: .9rem; }
+  .chip:first-child { margin-left: 0; }
+  .toggle { min-height: 3.2rem; }
+  .edit { padding: 2px 6px; }
+}
