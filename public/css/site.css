@@ -209,3 +209,20 @@ body:not(.app) {
 
 /* kotvy (#kdo-jsme…) se nezastaví pod přilepenou horní lištou */
 html:has(body:not(.app)) { scroll-padding-top: 5rem; }
+
+/* ---------- přihlašovací stránky: formulář uprostřed ---------- */
+/* .panel nastavuje margin: 0 (silnější selektor než .auth z wireframe.css), proto se formulář tisknul k levému okraji */
+body:not(.app) .auth { width: min(100% - 2rem, 26rem); max-width: 26rem; margin: auto; }
+body:not(.app):has(.auth) { display: flex; flex-direction: column; min-height: 100vh; min-height: 100svh; }
+/* předci formuláře (main, .container…) zaberou zbytek výšky a formulář vycentrují i svisle */
+body:not(.app):has(.auth) :is(main, .page, .section, .container):has(.auth) { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-block: 2rem; }
+body:not(.app):has(.auth) .footer { margin-top: 0; }
+
+/* ---------- přihlašovací stránky: formulář uprostřed okna ---------- */
+body:not(.app):has(.auth) { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
+body:not(.app):has(.auth) > main { flex: 1; display: grid; place-items: center; padding-block: 2rem; }
+body:not(.app) .auth { width: min(100%, 26rem); margin-inline: auto; }
+body:not(.app) .auth .panel-title { text-align: center; font-size: 1.25rem; }
+body:not(.app) .auth .panel-body { padding: 1.5rem; }
+body:not(.app) .auth .form-stack .btn[type="submit"] { width: 100%; }
+@media (max-width: 30rem) { body:not(.app):has(.auth) > main { padding-block: 1.5rem; } body:not(.app) .auth .panel-body { padding: 1.15rem; } }
